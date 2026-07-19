@@ -1,0 +1,1 @@
+self.api_url = "http://api:8000/api/inventory"
