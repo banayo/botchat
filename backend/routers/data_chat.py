@@ -5,6 +5,7 @@ from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_openai import ChatOpenAI
 from database import get_sales_langchain_db_uri 
+from langchain.tools import tool
 
 router = APIRouter(prefix="/api/data-chat", tags=["LangChain SQL Agent"])# 
 
@@ -36,6 +37,18 @@ CUSTOM_PROMPT = """คุณคือผู้ช่วยวิเคราะ�
 3. ห้ามรันคำสั่ง DML (INSERT, UPDATE, DELETE, DROP) เด็ดขาด
 4. หากดึงข้อมูลมาแสดงเป็นตาราง ให้จำกัดผลลัพธ์ด้วย LIMIT 10 เสมอ
 5. สรุปผลลัพธ์และตอบกลับผู้ใช้เป็น 'ภาษาไทย' เสมอ"""
+@tool
+def check_product_stock(item_code: str) -> str:
+    """
+    ใช้เครื่องมือนี้เมื่อผู้ใช้ต้องการ 'ตรวจสอบจำนวนสต็อก', 'ของคงเหลือ' หรือ 'เช็คสินค้า'
+    โดยต้องระบุรหัสสินค้า (item_code) เสมอ
+    """
+    # ตัวอย่าง: ถ้ามี API ของระบบ WMS หรือ P-check สามารถใช้ requests.get ยิงไปหาได้เลย
+    # response = requests.get(f"http://api_wms:8000/api/stock/{item_code}")
+    # return response.text
+    
+    # อันนี้ผมทำจำลองข้อมูลส่งกลับไปให้ AI คุยกับผู้ใช้ก่อน
+    return f"แจ้งเตือนจากระบบ WMS: สินค้ารหัส {item_code} ขณะนี้มีสต็อกคงเหลือพร้อมหยิบ 120 ชิ้น อยู่ที่ Zone A"
 @router.post("/")
 async def ask_database(request: ChatRequest):
     try:
