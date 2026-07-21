@@ -1,16 +1,10 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from database import get_db_connection
-from mock_data import setup_mock_database
-from routers import sales, inventory, data_chat
+from fastapi import FastAPI
+from routers import  data_chat,marketing,online
 app = FastAPI(title="Assistant API")
 
-app.include_router(inventory.router)
-app.include_router(sales.router)
 app.include_router(data_chat.router)
-
+app.include_router(marketing.router)
+app.include_router(online.router)
 @app.get("/")
 def read_root():
     return {"message": "API Server is running!"}

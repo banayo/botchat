@@ -6,3 +6,4 @@ python-dotenv
 langchain
 langchain-openai
 langchain-community
+oracledb==2.1.2
