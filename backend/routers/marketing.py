@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI
 from database import get_oracle_langchain_db_uri
 from prompts import MARKETING_PROMPT
 from langchain_community.utilities import SQLDatabase
+from ai_config import llm
 
 router = APIRouter(prefix="/api/marketing-chat", tags=["Marketing Data"])
 
