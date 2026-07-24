@@ -11,6 +11,8 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app_network
 
   # 2. Open WebUI
   open-webui:
@@ -24,6 +26,11 @@ services:
       - .env
     volumes:
       - webui_data:/app/backend/data
+    depends_on:
+      - db
+    networks:
+      - app_network 
+    
   api:
     build: ./backend 
     container_name: assistant_api
@@ -36,7 +43,12 @@ services:
       - DB_HOST=db
     depends_on:
       - db
+    networks:
+      - app_network
 
 volumes:
   pgdata:
   webui_data:
+
+networks:
+  app_network:
