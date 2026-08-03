@@ -29,8 +29,8 @@ services:
     depends_on:
       - db
     networks:
-      - app_network 
-    
+      - app_network
+       
   api:
     build: ./backend 
     container_name: assistant_api
@@ -41,6 +41,8 @@ services:
       - .env
     environment:
       - DB_HOST=db
+    volumes:
+      - ./backend:/app
     depends_on:
       - db
     networks:
