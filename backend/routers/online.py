@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import os
 from langchain_community.agent_toolkits import create_sql_agent
-from langchain_openai import ChatOpenAI
 from database import get_sales_langchain_db_uri
 from routers.prompts import ONLINE_PROMPT
 from langchain_community.utilities import SQLDatabase
 from ai_config import llm
+from routers.schemas import ChatRequest
 
 router = APIRouter(prefix="/api/online-chat", tags=["Online Data"])
 
