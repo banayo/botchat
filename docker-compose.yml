@@ -26,7 +26,7 @@ services:
       - webui_data:/app/backend/data
   api:
     build: ./backend 
-    container_name: inventory_api
+    container_name: assistant_api
     restart: unless-stopped
     ports:
       - "8000:8000"

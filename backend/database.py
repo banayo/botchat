@@ -1,5 +1,6 @@
 import os
 import psycopg2
+import urllib.parse
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
