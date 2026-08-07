@@ -1,5 +1,6 @@
 import logging
 import os
+# import time
 from typing import Any
 
 import jwt
@@ -67,24 +68,29 @@ def get_current_identity(
 
     token = credentials.credentials
     
-    logger = logging.getLogger("uvicorn.error")
+    # logger = logging.getLogger("uvicorn.error")
 
-    debug_claims = jwt.decode(
-        token,
-        options={
-            "verify_signature": False,
-            "verify_exp": False,
-            "verify_aud": False,
-            "verify_iss": False,
-        },
-    )
+    # debug_claims = jwt.decode(
+    #     token,
+    #     options={
+    #         "verify_signature": False,
+    #         "verify_exp": False,
+    #         "verify_iat": False,
+    #         "verify_nbf": False,
+    #         "verify_aud": False,
+    #         "verify_iss": False,
+    #     },
+    # )
 
-    logger.warning(
-        "JWT received aud=%r, expected aud=%r, iss=%r",
-        debug_claims.get("aud"),
-        AUTHENTIK_AUDIENCE,
-        debug_claims.get("iss"),
-    )
+    # now = int(time.time())
+
+    # logger.warning(
+    #     "JWT time debug: now=%s iat=%r nbf=%r exp=%r",
+    #     now,
+    #     debug_claims.get("iat"),
+    #     debug_claims.get("nbf"),
+    #     debug_claims.get("exp"),
+    # )
 
     try:
         signing_key = jwks_client.get_signing_key_from_jwt(token)
@@ -110,7 +116,7 @@ def get_current_identity(
             algorithms=ALLOWED_ALGORITHMS,
             issuer=AUTHENTIK_ISSUER,
             audience=AUTHENTIK_AUDIENCE,
-            leeway=30,
+            leeway=60,
             options={
                 "require": [
                     "sub",
