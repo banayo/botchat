@@ -27,7 +27,7 @@ bearer = HTTPBearer(auto_error=False)
 
 AUTHENTIK_ISSUER = os.getenv("AUTHENTIK_ISSUER")
 AUTHENTIK_JWKS_URL = os.getenv("AUTHENTIK_JWKS_URL")
-AUTHENTIK_AUDIENCE = os.getenv("AUTHENTIK_AUDIENCE")
+AUTHENTIK_AUDIENCE = os.getenv("OAUTH_CLIENT_ID")
 
 AUTHENTIK_GROUP_CLAIM = os.getenv("AUTHENTIK_GROUP_CLAIM")
 
@@ -41,7 +41,7 @@ jwks_client = PyJWKClient(
     headers={
         "Accept": "application/json",
         "User-Agent": "inventory-api-jwks/1.0",
-    },
+    }, # header avoid 403 error from authentik
 )
 
 
@@ -113,7 +113,7 @@ def get_current_identity(
             algorithms=ALLOWED_ALGORITHMS,
             issuer=AUTHENTIK_ISSUER,
             audience=AUTHENTIK_AUDIENCE,
-            leeway=60,
+            leeway=60, # allow time difference
             options={
                 "require": [
                     "sub",

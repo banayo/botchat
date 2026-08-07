@@ -5,7 +5,7 @@ from jwt import PyJWKClient
 from typing import List
 import os
 
-JWKS_URL = os.getenv("SSO_JWKS_URL")
+JWKS_URL = os.getenv("AUTHENTIK_JWKS_URL")
 SSO_AUDIENCE = os.getenv("OAUTH_CLIENT_ID")
 
 jwks_client = PyJWKClient(JWKS_URL)
