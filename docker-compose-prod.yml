@@ -1,0 +1,102 @@
+services:
+  # 1. ฐานข้อมูล PostgreSQL สำหรับ AI RAG (ซ่อนไว้ใช้วงในเท่านั้น)
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: rag_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 2. Open WebUI (หน้าบ้าน)
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open_webui
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL}
+      ENABLE_SIGNUP: ${ENABLE_SIGNUP}
+      CHAT_RESPONSE_MAX_TOOL_CALL_ITERATIONS: ${CHAT_RESPONSE_MAX_TOOL_CALL_ITERATIONS}
+      ENABLE_WEB_SEARCH: ${ENABLE_WEB_SEARCH}
+      WEB_SEARCH_ENGINE: ${WEB_SEARCH_ENGINE}
+      DDGS_BACKEND: ${DDGS_BACKEND}
+      WEB_SEARCH_RESULT_COUNT: ${WEB_SEARCH_RESULT_COUNT}
+      WEB_SEARCH_CONCURRENT_REQUESTS: ${WEB_SEARCH_CONCURRENT_REQUESTS}
+      WEB_LOADER_CONCURRENT_REQUESTS: ${WEB_LOADER_CONCURRENT_REQUESTS}
+      WEB_LOADER_ENGINE: ${WEB_LOADER_ENGINE}
+      WEB_LOADER_TIMEOUT: ${WEB_LOADER_TIMEOUT}
+      WEB_FETCH_MAX_CONTENT_LENGTH: ${WEB_FETCH_MAX_CONTENT_LENGTH}
+      ENABLE_WEB_SEARCH_CONFIRMATION: ${ENABLE_WEB_SEARCH_CONFIRMATION}
+    volumes:
+      - webui_data:/app/backend/data
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+      - shared-proxy-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 3. Custom API (หลังบ้าน) — เรียกจาก Open WebUI ในวงในเท่านั้น
+  api:
+    build: ./backend
+    container_name: assistant_api
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL}
+      LLM_MODEL_NAME: ${LLM_MODEL_NAME:-openai/gpt-4o-mini}
+      SALES_DB_HOST: ${SALES_DB_HOST}
+      SALES_DB_NAME: ${SALES_DB_NAME}
+      SALES_DB_USER: ${SALES_DB_USER}
+      SALES_DB_PASSWORD: ${SALES_DB_PASSWORD}
+      SALES_DB_PORT: ${SALES_DB_PORT}
+      ORACLE_USER: ${ORACLE_USER}
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD}
+      ORACLE_HOST: ${ORACLE_HOST}
+      ORACLE_PORT: ${ORACLE_PORT}
+      ORACLE_SERVICE: ${ORACLE_SERVICE}
+      AUTHENTIK_ISSUER: ${AUTHENTIK_ISSUER}
+      AUTHENTIK_JWKS_URL: ${AUTHENTIK_JWKS_URL}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
+      AUTHENTIK_GROUP_CLAIM: ${AUTHENTIK_GROUP_CLAIM}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:
+  webui_data:
+
+networks:
+  app_network:
+  shared-proxy-net:
+    external: true
