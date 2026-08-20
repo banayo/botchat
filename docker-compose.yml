@@ -30,6 +30,20 @@ services:
       - db
     networks:
       - app_network
+    environment:
+      # native tools calling max times
+      CHAT_RESPONSE_MAX_TOOL_CALL_ITERATIONS: "8"
+      # web search
+      ENABLE_WEB_SEARCH: "true"
+      WEB_SEARCH_ENGINE: "ddgs"
+      DDGS_BACKEND: "duckduckgo"
+      WEB_SEARCH_RESULT_COUNT: "3"
+      WEB_SEARCH_CONCURRENT_REQUESTS: "2"
+      WEB_LOADER_CONCURRENT_REQUESTS: "2"
+      WEB_LOADER_ENGINE: "safe_web"
+      WEB_LOADER_TIMEOUT: "15"
+      WEB_FETCH_MAX_CONTENT_LENGTH: "16000"
+      ENABLE_WEB_SEARCH_CONFIRMATION: "true"
        
   api:
     build: ./backend 
