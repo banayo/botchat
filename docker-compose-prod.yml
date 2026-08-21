@@ -63,7 +63,7 @@ services:
       OAUTH_GROUP_DEFAULT_SHARE: ${OAUTH_GROUP_SHARE}
       #Form login
       ENABLE_LOGIN_FORM: ${LOGIN_FORM}
-      ENABLE-PASSWORD-AUTH: ${PASSWORD_FORM}
+      ENABLE_PASSWORD_AUTH: ${PASSWORD_FORM}
     volumes:
       - webui_data:/app/backend/data
     depends_on:
