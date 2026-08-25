@@ -4,11 +4,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
+# ชี้ไปที่ vLLM (OpenAI-compatible) ผ่าน .env ไม่ใช้ OpenRouter
 llm = ChatOpenAI(
-    openai_api_key=os.getenv("OPENAI_API_KEY"),
-    openai_api_base=os.getenv("OPENAI_API_BASE_URL", "https://openrouter.ai/api/v1"),
-    # เผื่ออนาคตเปลี่ยนเป็น Qwen2.5 ก็แค่ไปแก้ในไฟล์ .env ที่เดียวครับ
-    model_name=os.getenv("LLM_MODEL_NAME", "openai/gpt-4o-mini"), 
-    temperature=0
+    openai_api_key=os.getenv("OPENAI_API_KEY", "not-needed"),
+    openai_api_base=os.getenv("OPENAI_API_BASE_URL"),
+    model=os.getenv("LLM_MODEL_NAME"),
+    temperature=0,
 )
