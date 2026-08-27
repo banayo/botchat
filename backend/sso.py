@@ -1,15 +1,44 @@
-from fastapi import HTTPException, Security, Depends
+from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt import PyJWKClient
-from typing import List
 import os
 
-JWKS_URL = os.getenv("AUTHENTIK_JWKS_URL")
-SSO_AUDIENCE = os.getenv("OAUTH_CLIENT_ID")
+from dotenv import load_dotenv
 
-jwks_client = PyJWKClient(JWKS_URL)
+load_dotenv()
+
+
+def resolve_jwks_url() -> str:
+    url = (os.getenv("AUTHENTIK_JWKS_URL") or "").strip()
+    if url.startswith("http://") or url.startswith("https://"):
+        return url
+
+    oidc = (os.getenv("OPENID_PROVIDER_URL") or "").strip()
+    suffix = "/.well-known/openid-configuration"
+    if oidc.startswith("http") and oidc.endswith(suffix):
+        return oidc[: -len(suffix)] + "/jwks/"
+
+    return ""
+
+
+JWKS_URL = resolve_jwks_url()
+SSO_AUDIENCE = os.getenv("OAUTH_CLIENT_ID")
 security_scheme = HTTPBearer()
+_jwks_client = None
+
+
+def get_jwks_client() -> PyJWKClient:
+    global _jwks_client
+    if _jwks_client is None:
+        if not JWKS_URL:
+            raise HTTPException(
+                status_code=503,
+                detail="AUTHENTIK_JWKS_URL is not configured",
+            )
+        _jwks_client = PyJWKClient(JWKS_URL)
+    return _jwks_client
+
 
 def verify_sso_token(credentials: HTTPAuthorizationCredentials = Security(security_scheme)):
     """
@@ -17,21 +46,17 @@ def verify_sso_token(credentials: HTTPAuthorizationCredentials = Security(securi
     """
     token = credentials.credentials
     try:
-        # Get Signing Key (Public Key) from SSO
-        signing_key = jwks_client.get_signing_key_from_jwt(token)
-        
-        # Decode and verify the token
+        signing_key = get_jwks_client().get_signing_key_from_jwt(token)
+
         payload = jwt.decode(
-                token,
-                signing_key.key,
-                algorithms=["RS256"],
-                audience=SSO_AUDIENCE,  
-                options={"verify_aud": True} 
-            )
-            
-        # If the token is decoded successfully, return the payload
+            token,
+            signing_key.key,
+            algorithms=["RS256"],
+            audience=SSO_AUDIENCE,
+            options={"verify_aud": True},
+        )
         return payload
-        
+
     except jwt.InvalidAudienceError:
         raise HTTPException(status_code=403, detail="Access Denied: Audience ไม่ถูกต้อง")
     except jwt.ExpiredSignatureError:
