@@ -55,6 +55,7 @@ services:
       - .env
     environment:
       - DB_HOST=db
+      - ORACLE_CLIENT_LIB_DIR=/opt/oracle/instantclient_19_19
     volumes:
       - ./backend:/app
     depends_on:

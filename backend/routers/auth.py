@@ -26,23 +26,47 @@ logger = logging.getLogger(__name__)
 bearer = HTTPBearer(auto_error=False)
 
 AUTHENTIK_ISSUER = os.getenv("AUTHENTIK_ISSUER")
-AUTHENTIK_JWKS_URL = os.getenv("AUTHENTIK_JWKS_URL")
 AUTHENTIK_AUDIENCE = os.getenv("OAUTH_CLIENT_ID")
-
 AUTHENTIK_GROUP_CLAIM = os.getenv("AUTHENTIK_GROUP_CLAIM")
 
 ALLOWED_ALGORITHMS = ["RS256"]
 
-jwks_client = PyJWKClient(
-    AUTHENTIK_JWKS_URL,
-    cache_jwk_set=True,
-    lifespan=300,
-    timeout=10,
-    headers={
-        "Accept": "application/json",
-        "User-Agent": "inventory-api-jwks/1.0",
-    }, # header avoid 403 error from authentik
-)
+_jwks_client = None
+
+
+def resolve_jwks_url() -> str:
+    url = (os.getenv("AUTHENTIK_JWKS_URL") or "").strip()
+    if url.startswith("http://") or url.startswith("https://"):
+        return url
+
+    oidc = (os.getenv("OPENID_PROVIDER_URL") or "").strip()
+    suffix = "/.well-known/openid-configuration"
+    if oidc.startswith("http") and oidc.endswith(suffix):
+        return oidc[: -len(suffix)] + "/jwks/"
+
+    return ""
+
+
+def get_jwks_client() -> PyJWKClient:
+    global _jwks_client
+    if _jwks_client is None:
+        jwks_url = resolve_jwks_url()
+        if not jwks_url:
+            raise HTTPException(
+                status_code=503,
+                detail="AUTHENTIK_JWKS_URL is not configured",
+            )
+        _jwks_client = PyJWKClient(
+            jwks_url,
+            cache_jwk_set=True,
+            lifespan=300,
+            timeout=10,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "inventory-api-jwks/1.0",
+            },
+        )
+    return _jwks_client
 
 
 def unauthorized(detail: str) -> HTTPException:
@@ -90,7 +114,7 @@ def get_current_identity(
     # )
 
     try:
-        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        signing_key = get_jwks_client().get_signing_key_from_jwt(token)
 
     except PyJWKClientConnectionError as exc:
         logger.error("Unable to reach Authentik JWKS endpoint")
