@@ -18,7 +18,7 @@ async def ask_export_data(request: ToolRequest):
     try:
         oracle_db = SQLDatabase.from_uri(
             get_oracle_langchain_db_uri(),
-            schema="KMCOM5",
+            schema="KMPROD",
             view_support=True,
             include_tables=["exp$erp_sale_rep_exp"],
         )
