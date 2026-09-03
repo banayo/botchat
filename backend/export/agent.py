@@ -2,6 +2,7 @@ from inspect import signature
 from functools import lru_cache
 from threading import Lock
 import logging
+import types
 
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_community.utilities import SQLDatabase
@@ -15,73 +16,34 @@ logger = logging.getLogger("uvicorn.error")
 _agent_lock = Lock()
 
 
-class OracleExportSQLDatabase(SQLDatabase):
-    def get_table_info(self, table_names=None):
-        if table_names is not None:
-            names = [table_names] if isinstance(table_names, str) else list(table_names)
-            by_upper = {name.upper(): name for name in self.get_usable_table_names()}
-            resolved = []
-            missing = []
-            for name in names:
-                actual = by_upper.get(str(name).upper())
-                if actual is None:
-                    missing.append(name)
-                else:
-                    resolved.append(actual)
-            if missing:
-                raise ValueError(f"table_names {set(missing)} not found in database")
-            table_names = resolved
-
-        kwargs = {}
-        if "get_col_comments" in signature(super().get_table_info).parameters:
-            kwargs["get_col_comments"] = True
-        return super().get_table_info(table_names, **kwargs)
-
-    def get_table_info_no_throw(self, table_names=None):
-        try:
-            schema = self.get_table_info(table_names)
-            return schema + "\n\n" + CURATED_VALUE_CONTEXT
-        except ValueError as exc:
-            return f"Error: {exc}"
-
-    def run_no_throw(self, command, *args, **kwargs):
-        try:
-            safe_sql = validate_and_limit_sql(command)
-        except SQLPolicyError as exc:
-            logger.warning("export SQL rejected: %s | original=%s", exc, command)
-            return f"Error: SQL rejected by policy: {exc}"
-        logger.info("export SQL executing:\n%s", safe_sql)
-        return super().run_no_throw(safe_sql, *args, **kwargs)
+def _patched_get_table_info_no_throw(self, table_names=None):
+    try:
+        schema = self.get_table_info(table_names)
+        return schema + "\n\n" + CURATED_VALUE_CONTEXT
+    except ValueError as exc:
+        return f"Error: {exc}"
 
 
-def create_export_sql_database() -> OracleExportSQLDatabase:
+def _patched_run_no_throw(self, command, *args, **kwargs):
+    try:
+        safe_sql = validate_and_limit_sql(command)
+    except SQLPolicyError as exc:
+        logger.warning("export SQL rejected: %s | original=%s", exc, command)
+        return f"Error: SQL rejected by policy: {exc}"
+    logger.info("export SQL executing:\n%s", safe_sql)
+    return SQLDatabase.run_no_throw(self, safe_sql, *args, **kwargs)
+
+
+def create_export_sql_database() -> SQLDatabase:
     engine = get_oracle_engine()
     base = {
         "schema": "KMPROD",
         "view_support": True,
         "sample_rows_in_table_info": 0,
     }
-    for table_name in ("exp$erp_sale_rep_exp", "EXP$ERP_SALE_REP_EXP"):
-        try:
-            return OracleExportSQLDatabase(
-                engine,
-                include_tables=[table_name],
-                **base,
-            )
-        except ValueError:
-            continue
-
-    db = OracleExportSQLDatabase(engine, **base)
-    matched = next(
-        (
-            name
-            for name in db.get_usable_table_names()
-            if name.upper() == "EXP$ERP_SALE_REP_EXP"
-        ),
-        "exp$erp_sale_rep_exp",
-    )
-    db._all_tables.add(matched)
-    db._include_tables = {matched}
+    db = SQLDatabase(engine, include_tables=["exp$erp_sale_rep_exp"], **base)
+    db.get_table_info_no_throw = types.MethodType(_patched_get_table_info_no_throw, db)
+    db.run_no_throw = types.MethodType(_patched_run_no_throw, db)
     return db
 
 
