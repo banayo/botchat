@@ -3,9 +3,12 @@ uvicorn
 psycopg2-binary
 pydantic
 python-dotenv
+sqlalchemy
+sqlglot
 langchain
 langchain-openai
 langchain-community
 oracledb==2.1.2
 cryptography
 pyjwt[crypto]==2.13.0
+pytest
