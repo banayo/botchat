@@ -1,6 +1,7 @@
 from inspect import signature
 from functools import lru_cache
 from threading import Lock
+import logging
 
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_community.utilities import SQLDatabase
@@ -10,6 +11,7 @@ from db.oracle import get_oracle_engine
 from export.metadata import CURATED_VALUE_CONTEXT, build_export_prompt
 from export.sql_guard import SQLPolicyError, validate_and_limit_sql
 
+logger = logging.getLogger("uvicorn.error")
 _agent_lock = Lock()
 
 
@@ -46,7 +48,9 @@ class OracleExportSQLDatabase(SQLDatabase):
         try:
             safe_sql = validate_and_limit_sql(command)
         except SQLPolicyError as exc:
+            logger.warning("export SQL rejected: %s | original=%s", exc, command)
             return f"Error: SQL rejected by policy: {exc}"
+        logger.info("export SQL executing:\n%s", safe_sql)
         return super().run_no_throw(safe_sql, *args, **kwargs)
 
 
@@ -83,6 +87,7 @@ def create_export_sql_database() -> OracleExportSQLDatabase:
 
 @lru_cache(maxsize=1)
 def get_export_agent():
+    logger.info("Initializing export LangChain agent (Oracle + vLLM)")
     oracle_db = create_export_sql_database()
     kwargs = {
         "llm": llm,
@@ -100,9 +105,12 @@ def get_export_agent():
 
 
 def invoke_export_agent(question: str) -> dict:
+    logger.info("export agent invoke start: %s", question[:300])
     agent = get_export_agent()
     payload = {"input": question}
     if "prefix" not in signature(create_sql_agent).parameters:
         payload["input"] = f"{build_export_prompt()}\n\nคำถามจากผู้ใช้: {question}"
     with _agent_lock:
-        return agent.invoke(payload)
+        result = agent.invoke(payload)
+    logger.info("export agent invoke done")
+    return result

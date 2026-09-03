@@ -7,7 +7,7 @@ from sqlalchemy.engine import Engine
 
 from database import get_oracle_langchain_db_uri
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn.error")
 
 QUERY_TIMEOUT_MS = 60_000
 
@@ -27,7 +27,7 @@ def get_oracle_engine() -> Engine:
         "pool_recycle": 1800,
         "pool_size": 5,
         "max_overflow": 5,
-        "connect_args": {"call_timeout": QUERY_TIMEOUT_MS},
+        # "connect_args": {"call_timeout": QUERY_TIMEOUT_MS},
     }
     try:
         return create_engine(

@@ -3,7 +3,8 @@ import json
 import logging
 from typing import Any
 
-logger = logging.getLogger("export.audit")
+# uvicorn.error is what `docker logs assistant_api` actually shows.
+logger = logging.getLogger("uvicorn.error")
 
 
 def hash_text(value: str) -> str:
@@ -23,4 +24,4 @@ def identity_sub(identity: dict[str, Any] | None) -> str:
 
 def log_export_event(**fields: Any) -> None:
     payload = {key: value for key, value in fields.items() if value is not None}
-    logger.info(json.dumps(payload, default=str, ensure_ascii=False))
+    logger.info("export.audit %s", json.dumps(payload, default=str, ensure_ascii=False))

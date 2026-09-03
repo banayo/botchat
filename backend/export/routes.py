@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from typing import Any
 
@@ -9,6 +10,8 @@ from export.audit import hash_text, identity_sub, log_export_event
 from export.authz import require_export_access
 from export.models import ExportQuestion, ExportReportRequest
 from export.service import execute_export_report
+
+logger = logging.getLogger("uvicorn.error")
 
 router = APIRouter(tags=["Export Data"])
 
@@ -27,6 +30,7 @@ async def ask_export_data(
         success = True
         return {"kind": "answer", "reply": reply}
     except Exception as exc:
+        logger.exception("export-chat failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     finally:
         log_export_event(
@@ -64,8 +68,10 @@ async def create_export_report(
             "summary": result["summary"],
         }
     except ValueError as exc:
+        logger.warning("export-report rejected: %s", exc)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
+        logger.exception("export-report failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     finally:
         log_export_event(
