@@ -66,11 +66,10 @@ EXPORT_DIMENSIONS: dict[str, dict[str, str]] = {
 
 EXPORT_METRICS: dict[str, dict[str, Any]] = {
     "sales": {
-        "description": "ยอดขายสุทธิ (บาท) กลับเครื่องหมายใบคืนและใบลดหนี้",
+        "description": "ยอดขายสุทธิ (บาท)",
         "base_expression": """
             CASE
-                WHEN MODULE IN ('RT', 'CN') THEN -ITEM_AMT1
-                WHEN MODULE IN ('IV', 'DN') THEN ITEM_AMT1
+                WHEN MODULE IN ('RT', 'CN', 'IV', 'DN') THEN ITEM_AMT1
                 ELSE 0
             END
         """,
@@ -83,11 +82,10 @@ EXPORT_METRICS: dict[str, dict[str, Any]] = {
         ],
     },
     "quantity": {
-        "description": "จำนวนสินค้าสุทธิ กลับเครื่องหมายใบคืนและใบลดหนี้",
+        "description": "จำนวนสินค้าสุทธิ",
         "base_expression": """
             CASE
-                WHEN MODULE IN ('RT', 'CN') THEN -QTY1
-                WHEN MODULE IN ('IV', 'DN') THEN QTY1
+                WHEN MODULE IN ('RT', 'CN', 'IV', 'DN') THEN QTY1
                 ELSE 0
             END
         """,

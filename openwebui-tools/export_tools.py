@@ -163,7 +163,7 @@ class Tools:
         API_BASE_URL: str = Field(
             default=os.getenv("EXPORT_API_BASE_URL", "http://assistant_api:8000")
         )
-        ENABLE_PIVOT: bool = Field(default=False)
+        ENABLE_PIVOT: bool = Field(default=True)
 
     def __init__(self):
         self.valves = self.Valves()
@@ -228,6 +228,21 @@ class Tools:
         """
         Use for aggregated reports, comparisons, totals, trends and pivot tables.
         Renders a table in chat (Rich UI). The model only receives a compact summary.
+
+        Use for aggregated reports...
+    
+        Valid dimensions: "month", "country" (max 3, no duplicates)
+        Valid metrics: "sales", "quantity"
+        Valid aggregations: "sum", "average"
+        
+        Example:
+            show_export_pivot(
+                dimensions=["month", "country"],
+                metric="sales",
+                aggregation="sum",
+                date_from="2025-01-01",
+                date_to="2025-06-30"
+            )
         """
         if not self.valves.ENABLE_PIVOT:
             return json.dumps(

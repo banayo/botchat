@@ -56,7 +56,7 @@ def get_export_agent():
         "db": oracle_db,
         "agent_type": "tool-calling",
         "top_k": 50,
-        "max_iterations": 6,
+        "max_iterations": 8,
         "max_execution_time": 90,
         "handle_parsing_errors": True,
         "verbose": False,

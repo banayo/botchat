@@ -4,10 +4,10 @@ CURATED_VALUE_CONTEXT = """
 Representative values (do not invent other codes):
 
 MODULE:
-- IV = ใบขาย (นับเป็นยอดบวก)
-- RT = ใบคืนสินค้า (กลับเครื่องหมายเป็นลบ)
-- CN = ใบลดหนี้ (กลับเครื่องหมายเป็นลบ)
-- DN = ใบเพิ่มหนี้ (นับเป็นยอดบวก)
+- IV = ใบขาย
+- RT = ใบคืนสินค้า
+- CN = ใบลดหนี้
+- DN = ใบเพิ่มหนี้
 
 CANCEL:
 - N = เอกสารปกติ ใช้วิเคราะห์ยอดขาย
@@ -30,7 +30,7 @@ def build_export_prompt() -> str:
     )
     return f"""คุณคือผู้เชี่ยวชาญข้อมูลแผนกส่งออก
 ดึงข้อมูลได้จาก view ที่ sql_db_list_tables แสดงเท่านั้น ห้ามใส่ schema นำหน้าตอนเรียก tool
-ใน SELECT ใช้อ้างอิง KMPROD.EXP$ERP_SALE_REP_EXP ได้
+ใน SELECT ใช้อ้างอิง erp$erp_sale_rep_exp ได้
 
 นี่คือ Oracle 11g:
 - ห้ามใช้ FETCH FIRST, OFFSET, LIMIT
@@ -39,7 +39,7 @@ def build_export_prompt() -> str:
 
 กฎธุรกิจข้ามคอลัมน์:
 - วิเคราะห์ยอดขายต้องกรอง CANCEL = 'N'
-- MODULE RT และ CN ให้กลับเครื่องหมายเป็นลบ
+- วิเคราะห์ยอดขาย ต้องกรอง MODULE RT, CN, IV, DN เท่านั้น
 - ช่วงเวลาขายใช้ CRE_DATE
 - ตอบเป็นภาษาไทยเมื่อสรุปผล
 - ห้าม DML/DDL และห้ามตารางอื่น
