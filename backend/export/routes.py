@@ -2,14 +2,13 @@ import asyncio
 import logging
 import time
 from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException
-
-from export.agent import invoke_export_agent
 from export.audit import hash_text, identity_sub, log_export_event
 from export.authz import require_export_access
-from export.models import ExportQuestion, ExportReportRequest
-from export.service import execute_export_report
+from export.chat.agent import invoke_export_agent
+from export.chat.models import ExportQuestion
+from export.report.models import ExportReportRequest
+from export.report.service import execute_export_report
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -17,7 +16,7 @@ router = APIRouter(tags=["Export Data"])
 
 
 @router.post("/api/export-chat")
-async def ask_export_data(
+async def ask_export_data(#  คำถามอิสระ สำหรับการสอบถามข้อมูลจากฐานข้อมูล → LangChain Agent → SQL guard → Oracle
     request: ExportQuestion,
     identity: dict[str, Any] = Depends(require_export_access),
 ):
@@ -44,7 +43,7 @@ async def ask_export_data(
 
 
 @router.post("/api/export-report")
-async def create_export_report(
+async def create_export_report(#Pydantic → registry → SQL builder → Oracle # สร้างรายงานข้อมูลจากฐานข้อมูล
     request: ExportReportRequest,
     identity: dict[str, Any] = Depends(require_export_access),
 ):

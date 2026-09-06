@@ -8,13 +8,9 @@ MetricKey = Literal["sales", "quantity"]
 AggregationKey = Literal["sum", "average"]
 
 
-class ExportQuestion(BaseModel):
-    question: str = Field(min_length=1, max_length=4000)
-
-
 class ExportReportRequest(BaseModel):
     dimensions: list[DimensionKey]
-    metric: MetricKey
+    metric: MetricKey #  ได้แค่ "sales" หรือ "quantity"
     aggregation: AggregationKey
     date_from: date
     date_to: date
@@ -34,3 +30,14 @@ class ExportReportRequest(BaseModel):
         if (self.date_to - self.date_from).days > 366 * 3:
             raise ValueError("date range cannot exceed three years")
         return self
+   
+#  Pydantic จะสร้างจาก JSON body ให้เป็นออบเจ็คของ ExportReportRequest
+#{
+#   "dimensions": ["month", "country"],
+#   "metric": "sales",
+#   "aggregation": "sum",
+#   "date_from": "2025-01-01",
+#   "date_to": "2025-12-31",
+#   "country": null,
+#   "limit": 500
+# }

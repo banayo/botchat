@@ -28,15 +28,16 @@ services:
       - webui_data:/app/backend/data
     depends_on:
       - db
+      - searxng
     networks:
       - app_network
     environment:
       # native tools calling max times
       CHAT_RESPONSE_MAX_TOOL_CALL_ITERATIONS: "8"
-      # web search
+      # web search (SearXNG, internal)
       ENABLE_WEB_SEARCH: "true"
-      WEB_SEARCH_ENGINE: "ddgs"
-      DDGS_BACKEND: "duckduckgo"
+      WEB_SEARCH_ENGINE: "searxng"
+      SEARXNG_QUERY_URL: "http://searxng:8080/search?q=<query>"
       WEB_SEARCH_RESULT_COUNT: "3"
       WEB_SEARCH_CONCURRENT_REQUESTS: "2"
       WEB_LOADER_CONCURRENT_REQUESTS: "2"
@@ -44,7 +45,18 @@ services:
       WEB_LOADER_TIMEOUT: "15"
       WEB_FETCH_MAX_CONTENT_LENGTH: "16000"
       ENABLE_WEB_SEARCH_CONFIRMATION: "true"
-       
+
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+    networks:
+      - app_network
+
   api:
     build: ./backend 
     container_name: assistant_api

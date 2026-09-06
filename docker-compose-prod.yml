@@ -38,7 +38,7 @@ services:
       CHAT_RESPONSE_MAX_TOOL_CALL_ITERATIONS: ${CHAT_RESPONSE_MAX_TOOL_CALL_ITERATIONS}
       ENABLE_WEB_SEARCH: ${ENABLE_WEB_SEARCH}
       WEB_SEARCH_ENGINE: ${WEB_SEARCH_ENGINE}
-      DDGS_BACKEND: ${DDGS_BACKEND}
+      SEARXNG_QUERY_URL: ${SEARXNG_QUERY_URL}
       WEB_SEARCH_RESULT_COUNT: ${WEB_SEARCH_RESULT_COUNT}
       WEB_SEARCH_CONCURRENT_REQUESTS: ${WEB_SEARCH_CONCURRENT_REQUESTS}
       WEB_LOADER_CONCURRENT_REQUESTS: ${WEB_LOADER_CONCURRENT_REQUESTS}
@@ -69,9 +69,27 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      searxng:
+        condition: service_started
     networks:
       - app_network
       - shared-proxy-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+    networks:
+      - app_network
     logging:
       driver: "json-file"
       options:

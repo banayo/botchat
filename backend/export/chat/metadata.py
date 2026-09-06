@@ -1,4 +1,4 @@
-from export.registry import EXPORT_FIELDS, EXPORT_METRICS
+from export.report.registry import EXPORT_FIELDS, EXPORT_METRICS
 
 CURATED_VALUE_CONTEXT = """
 Representative values (do not invent other codes):

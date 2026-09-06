@@ -1,12 +1,10 @@
 import logging
 from decimal import Decimal
 from typing import Any
-
 from sqlalchemy import text
-
 from db.oracle import get_oracle_engine
-from export.models import ExportReportRequest
-from export.query_builder import build_export_report_sql
+from export.report.models import ExportReportRequest# Pydantic model
+from export.report.query_builder import build_export_report_sql
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -19,8 +17,8 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
-def execute_export_report(request: ExportReportRequest) -> dict[str, Any]:
-    sql, params = build_export_report_sql(request)
+def execute_export_report(request: ExportReportRequest) -> dict[str, Any]: # Pydantic → registry → SQL builder → Oracle
+    sql, params = build_export_report_sql(request) # ส่ง request ไปยัง query_builder.py
     logger.info("export report SQL:\n%s\nparams=%s", sql, params)
     engine = get_oracle_engine()
     with engine.connect() as connection:

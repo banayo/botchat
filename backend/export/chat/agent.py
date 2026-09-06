@@ -9,22 +9,22 @@ from langchain_community.utilities import SQLDatabase
 
 from ai_config import llm
 from db.oracle import get_oracle_engine
-from export.metadata import CURATED_VALUE_CONTEXT, build_export_prompt
-from export.sql_guard import SQLPolicyError, validate_and_limit_sql
+from export.chat.metadata import CURATED_VALUE_CONTEXT, build_export_prompt
+from export.chat.sql_guard import SQLPolicyError, validate_and_limit_sql
 
 logger = logging.getLogger("uvicorn.error")
 _agent_lock = Lock()
 
 
-def _patched_get_table_info_no_throw(self, table_names=None):
+def _patched_get_table_info_no_throw(self, table_names=None): #4.LangChain Agent
     try:
         schema = self.get_table_info(table_names)
-        return schema + "\n\n" + CURATED_VALUE_CONTEXT
+        return schema + "\n\n" + CURATED_VALUE_CONTEXT #5.LangChain Agent  คำอธิบายค่าธุรกิจ ที่อยู่ในฐานข้อมูล
     except ValueError as exc:
         return f"Error: {exc}"
 
 
-def _patched_run_no_throw(self, command, *args, **kwargs):
+def _patched_run_no_throw(self, command, *args, **kwargs): #6.LangChain Agent ตรวจสอบ SQL ที่ส่งมา
     try:
         safe_sql = validate_and_limit_sql(command)
     except SQLPolicyError as exc:
@@ -34,7 +34,7 @@ def _patched_run_no_throw(self, command, *args, **kwargs):
     return SQLDatabase.run_no_throw(self, safe_sql, *args, **kwargs)
 
 
-def create_export_sql_database() -> SQLDatabase:
+def create_export_sql_database() -> SQLDatabase: ##3.LangChain Agent ( โครงสร้างคอลัมน์ คำอธิบายค่าธุรกิจ → LangChain Agent)
     engine = get_oracle_engine()
     base = {
         "schema": "KMPROD",
@@ -42,13 +42,13 @@ def create_export_sql_database() -> SQLDatabase:
         "sample_rows_in_table_info": 0,
     }
     db = SQLDatabase(engine, include_tables=["exp$erp_sale_rep_exp"], **base)
-    db.get_table_info_no_throw = types.MethodType(_patched_get_table_info_no_throw, db)
-    db.run_no_throw = types.MethodType(_patched_run_no_throw, db)
+    db.get_table_info_no_throw = types.MethodType(_patched_get_table_info_no_throw, db) #4.LangChain Agent
+    db.run_no_throw = types.MethodType(_patched_run_no_throw, db) #6.LangChain Agent
     return db
 
 
 @lru_cache(maxsize=1)
-def get_export_agent():
+def get_export_agent():#2.LangChain Agent ( LLM เขียน SQL → Oracle)
     logger.info("Initializing export LangChain agent (Oracle + vLLM)")
     oracle_db = create_export_sql_database()
     kwargs = {
@@ -66,9 +66,9 @@ def get_export_agent():
     return create_sql_agent(**kwargs)
 
 
-def invoke_export_agent(question: str) -> dict:
+def invoke_export_agent(question: str) -> dict: #1.LangChain Agent (Oracle + vLLM)
     logger.info("export agent invoke start: %s", question[:300])
-    agent = get_export_agent()
+    agent = get_export_agent() #2.LangChain Agent ( LLM เขียน SQL → Oracle)
     payload = {"input": question}
     if "prefix" not in signature(create_sql_agent).parameters:
         payload["input"] = f"{build_export_prompt()}\n\nคำถามจากผู้ใช้: {question}"

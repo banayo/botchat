@@ -1,0 +1,21 @@
+# SearXNG — internal only (Open WebUI). JSON format is required.
+use_default_settings: true
+
+server:
+  limiter: false
+  image_proxy: true
+
+search:
+  formats:
+    - html
+    - json
+
+engines:
+  - name: google
+    disabled: false
+  - name: brave
+    disabled: false
+  - name: duckduckgo
+    disabled: false
+  - name: wikipedia
+    disabled: false

@@ -61,7 +61,7 @@ LangChain agent **ไม่ได้ถูกลบ** รายงานคว�
 - `RT` / `CN` กลับเครื่องหมายเป็นลบ
 - `IV` / `DN` เป็นบวก
 
-`COMMENT ON COLUMN` เป็นเอกสารให้ LangChain อ่านเท่านั้น **เปลี่ยน comment ไม่ได้เปลี่ยนสูตร SQL** สูตรอยู่ที่ `backend/export/registry.py`
+`COMMENT ON COLUMN` เป็นเอกสารให้ LangChain อ่านเท่านั้น **เปลี่ยน comment ไม่ได้เปลี่ยนสูตร SQL** สูตรอยู่ที่ `backend/export/report/registry.py`
 
 ## โครงสร้างไฟล์
 
@@ -71,20 +71,13 @@ backend/
   database.py              # URI + Instant Client thick mode
   ai_config.py             # ChatOpenAI → vLLM
   db/oracle.py             # engine เดียวต่อ process
-  routers/export.py        # re-export router
   routers/auth.py          # JWT Authentik
   export/
     routes.py
-    agent.py
-    sql_guard.py
-    registry.py
-    metadata.py
-    query_builder.py
-    service.py
-    models.py
     authz.py
     audit.py
-  tests/
+    chat/
+    report/
 
 sql/collect_export_view.sql
 sql/export_oracle_setup.sql
@@ -144,7 +137,7 @@ Body:
 
 ## SQL guard
 
-ไฟล์ `backend/export/sql_guard.py` ใช้ sqlglot (Oracle) เป็นหลัก
+ไฟล์ `backend/export/chat/sql_guard.py` ใช้ sqlglot (Oracle) เป็นหลัก
 
 ปฏิเสธ:
 
