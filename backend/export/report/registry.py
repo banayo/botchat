@@ -43,7 +43,7 @@ EXPORT_FIELDS: dict[str, dict[str, Any]] = {
     },
     "zone_name": {
         "column": "ZONE_NAME",
-        "description": "พื้นที่ขาย / เขต ใช้เป็นมิติประเทศหรือโซน",
+        "description": "พื้นที่ขาย ใช้เป็นประเทศภาษาอังกฤษ(Thailand) หรือ ลูกค้าทั่วไปต่างประเทศ agent, ลูกค้าทั่วไปต่างประเทศ wholesales",
         "role": "dimension",
         "use_for_filter": True,
         "use_for_group": True,

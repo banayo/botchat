@@ -13,7 +13,7 @@ from routers.auth import (
 def require_export_access(
     identity: dict[str, Any] = Depends(get_current_identity),
 ) -> dict[str, Any]:
-    raw = (os.getenv("EXPORT_ALLOWED_GROUPS") or "").strip()
+    raw = (os.getenv("EXPORT_ALLOWED_GROUPS") or "")
     if not raw:
         return identity
 

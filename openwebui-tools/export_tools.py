@@ -233,7 +233,8 @@ class Tools:
     
         Valid dimensions: "month", "country" (max 3, no duplicates)
         Valid metrics: "sales", "quantity"
-        Valid aggregations: "sum", "average"
+        Valid aggregations: "sum", "average" (Baht)
+        Valid country: Country name, "ลูกค้าทั่วไปต่างประเทศ wholesales", "ลูกค้าทั่วไปต่างประเทศ agent"
         
         Example:
             show_export_pivot(
@@ -241,7 +242,8 @@ class Tools:
                 metric="sales",
                 aggregation="sum",
                 date_from="2025-01-01",
-                date_to="2025-06-30"
+                date_to="2025-06-30",
+                country="Thailand"
             )
         """
         if not self.valves.ENABLE_PIVOT:
