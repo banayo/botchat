@@ -23,14 +23,32 @@ def _init_oracle_thick_mode():
 _init_oracle_thick_mode()
 
 
-def get_oracle_langchain_db_uri():
-    oracle_user = os.getenv("ORACLE_USER")
-    oracle_password = urllib.parse.quote_plus(os.getenv("ORACLE_PASSWORD", ""))
+def get_oracle_langchain_db_uri(user: str | None = None, password: str | None = None):
+    oracle_user = user if user is not None else os.getenv("ORACLE_USER")
+    oracle_password = urllib.parse.quote_plus(
+        password if password is not None else os.getenv("ORACLE_PASSWORD", "")
+    )
     oracle_host = os.getenv("ORACLE_HOST")
     oracle_port = os.getenv("ORACLE_PORT", "1521")
     oracle_service = os.getenv("ORACLE_SERVICE")
-    oracle_uri = f"oracle+oracledb://{oracle_user}:{oracle_password}@{oracle_host}:{oracle_port}/?service_name={oracle_service}"
-    return oracle_uri
+    return (
+        f"oracle+oracledb://{oracle_user}:{oracle_password}"
+        f"@{oracle_host}:{oracle_port}/?service_name={oracle_service}"
+    )
+
+
+def get_export_oracle_uri():
+    user = os.getenv("EXPORT_ORACLE_USER")
+    if user:
+        return get_oracle_langchain_db_uri(user, os.getenv("EXPORT_ORACLE_PASSWORD", ""))
+    return get_oracle_langchain_db_uri()
+
+
+def get_mkt_oracle_uri():
+    user = os.getenv("MKT_ORACLE_USER")
+    if user:
+        return get_oracle_langchain_db_uri(user, os.getenv("MKT_ORACLE_PASSWORD", ""))
+    return get_oracle_langchain_db_uri()
 
 
 def get_sales_langchain_db_uri():

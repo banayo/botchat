@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth
 from export.routes import router as export_router
+from mkt.routes import router as mkt_router
 
 app = FastAPI(title="Assistant API")
 
@@ -14,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(export_router)
+app.include_router(mkt_router)
 app.include_router(auth.router)
 
 @app.get("/")

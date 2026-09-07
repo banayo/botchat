@@ -35,7 +35,7 @@ def _patched_run_no_throw(self, command, *args, **kwargs): #6.LangChain Agent �
 
 
 def create_export_sql_database() -> SQLDatabase: ##3.LangChain Agent ( โครงสร้างคอลัมน์ คำอธิบายค่าธุรกิจ → LangChain Agent)
-    engine = get_oracle_engine()
+    engine = get_oracle_engine("export")
     base = {
         "schema": "KMPROD",
         "view_support": True,
