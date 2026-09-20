@@ -29,8 +29,10 @@ services:
     container_name: open_webui
     restart: unless-stopped
     environment:
-      # RAG DB
-      VECTOR_DB: ${AI_DB}
+      # RAG DB — pgvector ต้องมี DATABASE_URL / PGVECTOR_DB_URL ใน container
+      VECTOR_DB: ${VECTOR_DB:-${AI_DB:-pgvector}}
+      DATABASE_URL: ${DATABASE_URL}
+      PGVECTOR_DB_URL: ${PGVECTOR_DB_URL:-${DATABASE_URL}}
       # Websearch
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL}
@@ -89,6 +91,7 @@ services:
       - ./searxng:/etc/searxng:rw
     environment:
       SEARXNG_BASE_URL: http://searxng:8080/
+      SEARXNG_SECRET: ${SEARXNG_SECRET}
     networks:
       - app_network
     logging:
