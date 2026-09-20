@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import marketing, online, auth, export
+from routers import auth
+from export.routes import router as export_router
+from mkt.routes import router as mkt_router
 
 app = FastAPI(title="Assistant API")
 
@@ -12,10 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.include_router(data_chat.router)
-app.include_router(marketing.router)
-app.include_router(online.router)
-app.include_router(export.router)
+app.include_router(export_router)
+app.include_router(mkt_router)
 app.include_router(auth.router)
 
 @app.get("/")
