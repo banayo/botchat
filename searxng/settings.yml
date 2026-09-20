@@ -2,6 +2,8 @@
 use_default_settings: true
 
 server:
+  # Overridden by SEARXNG_SECRET in .env
+  secret_key: "set-via-SEARXNG_SECRET-env"
   limiter: false
   image_proxy: true
 

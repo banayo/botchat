@@ -32,6 +32,9 @@ services:
     networks:
       - app_network
     environment:
+      ENABLE_OLLAMA_API: "false"
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+      OAUTH_SCOPES: ${OAUTH_SCOPES}
       # native tools calling max times
       CHAT_RESPONSE_MAX_TOOL_CALL_ITERATIONS: "8"
       # web search (SearXNG, internal)
@@ -54,6 +57,7 @@ services:
       - ./searxng:/etc/searxng:rw
     environment:
       SEARXNG_BASE_URL: http://searxng:8080/
+      SEARXNG_SECRET: ${SEARXNG_SECRET}
     networks:
       - app_network
 
