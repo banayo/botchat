@@ -1,5 +1,17 @@
-# SearXNG — internal only (Open WebUI). JSON format is required.
-use_default_settings: true
+# SearXNG - internal only (Open WebUI). JSON format is required.
+#
+# keep_only restricts the engine set; a bare `engines:` list only patches the
+# upstream defaults, which would leave all ~84 of them active.
+#
+# duckduckgo and mojeek are deliberately excluded: both hard-block this host's
+# egress IP (CAPTCHA / access denied) and would emit a warning on every query.
+# Re-add them here if the outbound IP ever changes.
+use_default_settings:
+  engines:
+    keep_only:
+      - google
+      - brave
+      - wikipedia
 
 server:
   # Overridden by SEARXNG_SECRET in .env
@@ -12,12 +24,14 @@ search:
     - html
     - json
 
+outgoing:
+  # default is 3.0s; brave regularly exceeds it from this host and then gets
+  # suspended, leaving google as the only working engine.
+  request_timeout: 6.0
+  max_request_timeout: 10.0
+
+# google ships with `disabled: true` upstream, so it needs re-enabling on top
+# of keep_only.
 engines:
   - name: google
-    disabled: false
-  - name: brave
-    disabled: false
-  - name: duckduckgo
-    disabled: false
-  - name: wikipedia
     disabled: false

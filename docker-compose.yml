@@ -47,7 +47,6 @@ services:
       WEB_LOADER_ENGINE: "safe_web"
       WEB_LOADER_TIMEOUT: "15"
       WEB_FETCH_MAX_CONTENT_LENGTH: "16000"
-      ENABLE_WEB_SEARCH_CONFIRMATION: "true"
 
   searxng:
     image: docker.io/searxng/searxng:latest
@@ -72,6 +71,7 @@ services:
     environment:
       - DB_HOST=db
       - ORACLE_CLIENT_LIB_DIR=/opt/oracle/instantclient_19_19
+      - PYTHONDONTWRITEBYTECODE=1
     volumes:
       - ./backend:/app
     depends_on:

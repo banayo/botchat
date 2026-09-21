@@ -23,11 +23,20 @@ async def ask_export_data(#  คำถามอิสระ สำหรับ�
     started = time.perf_counter()
     success = False
     reply = ""
+    row_count = 0
     try:
         response = await asyncio.to_thread(invoke_export_agent, request.question)
         reply = response.get("output", "")
+        data = response.get("data") or {}
+        row_count = len(data.get("rows", []))
         success = True
-        return {"kind": "answer", "reply": reply}
+        return {
+            "kind": "answer",
+            "reply": reply,
+            "columns": data.get("columns", []),
+            "rows": data.get("rows", []),
+            "row_count": row_count,
+        }
     except Exception as exc:
         logger.exception("export-chat failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -38,6 +47,7 @@ async def ask_export_data(#  คำถามอิสระ สำหรับ�
             question_hash=hash_text(request.question),
             execution_path="langchain",
             llm_duration_ms=int((time.perf_counter() - started) * 1000),
+            returned_rows=row_count,
             success=success,
         )
 

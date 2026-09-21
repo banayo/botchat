@@ -24,10 +24,19 @@ async def ask_mkt_data(
 ):
     started = time.perf_counter()
     success = False
+    row_count = 0
     try:
         response = await asyncio.to_thread(invoke_mkt_agent, request.question)
+        data = response.get("data") or {}
+        row_count = len(data.get("rows", []))
         success = True
-        return {"kind": "answer", "reply": response.get("output", "")}
+        return {
+            "kind": "answer",
+            "reply": response.get("output", ""),
+            "columns": data.get("columns", []),
+            "rows": data.get("rows", []),
+            "row_count": row_count,
+        }
     except Exception as exc:
         logger.exception("mkt-chat failed: %s", exc)
         raise HTTPException(status_code=500, detail="ไม่สามารถประมวลผลคำถามได้ กรุณาลองใหม่") from exc
@@ -38,6 +47,7 @@ async def ask_mkt_data(
             question_hash=hash_text(request.question),
             execution_path="langchain",
             llm_duration_ms=int((time.perf_counter() - started) * 1000),
+            returned_rows=row_count,
             success=success,
         )
 
