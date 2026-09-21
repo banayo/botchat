@@ -1,4 +1,3 @@
-from inspect import signature
 from functools import lru_cache
 from threading import Lock
 import logging
@@ -53,28 +52,23 @@ def create_mkt_sql_database() -> SQLDatabase:
 @lru_cache(maxsize=1)
 def get_mkt_agent():
     logger.info("Initializing marketing LangChain agent (Oracle + vLLM)")
-    oracle_db = create_mkt_sql_database()
-    kwargs = {
-        "llm": llm,
-        "db": oracle_db,
-        "agent_type": "tool-calling",
-        "top_k": 50,
-        "max_iterations": 8,
-        "max_execution_time": 90,
-        "handle_parsing_errors": True,
-        "verbose": False,
-    }
-    if "prefix" in signature(create_sql_agent).parameters:
-        kwargs["prefix"] = build_mkt_prompt()
-    return create_sql_agent(**kwargs)
+    return create_sql_agent(
+        llm=llm,
+        db=create_mkt_sql_database(),
+        agent_type="tool-calling",
+        prefix=build_mkt_prompt(),
+        top_k=50,
+        max_iterations=8,
+        max_execution_time=90,
+        handle_parsing_errors=True,
+        verbose=False,
+    )
 
-
+    
 def invoke_mkt_agent(question: str) -> dict:
     logger.info("mkt agent invoke start: %s", question[:300])
     agent = get_mkt_agent()
     payload = {"input": question}
-    if "prefix" not in signature(create_sql_agent).parameters:
-        payload["input"] = f"{build_mkt_prompt()}\n\nคำถามจากผู้ใช้: {question}"
     with _agent_lock:
         result = agent.invoke(payload)
     logger.info("mkt agent invoke done")

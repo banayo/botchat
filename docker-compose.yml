@@ -72,6 +72,7 @@ services:
     environment:
       - DB_HOST=db
       - ORACLE_CLIENT_LIB_DIR=/opt/oracle/instantclient_19_19
+      - PYTHONDONTWRITEBYTECODE=1
     volumes:
       - ./backend:/app
     depends_on:
