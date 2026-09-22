@@ -9,8 +9,8 @@ from mkt.audit import hash_text, identity_sub, log_mkt_event
 from mkt.authz import require_mkt_access
 from mkt.chat.agent import invoke_mkt_agent
 from mkt.chat.models import MktQuestion
-from mkt.report.models import MktReportRequest
-from mkt.report.service import execute_mkt_report
+from mkt.report.models import MktReportRequest, MktYoyRequest
+from mkt.report.service import execute_mkt_report, execute_mkt_yoy
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -86,6 +86,41 @@ async def create_mkt_report(
         log_mkt_event(
             user_sub=identity_sub(identity),
             tool="show_mkt_pivot",
+            metric=request.metric,
+            dimensions=list(request.dimensions),
+            execution_path="controlled",
+            generated_sql_hash=hash_text(sql) if sql else None,
+            sql_duration_ms=int((time.perf_counter() - started) * 1000),
+            returned_rows=row_count,
+            success=success,
+        )
+
+
+@router.post("/api/mkt-report/yoy")
+async def create_mkt_yoy_report(
+    request: MktYoyRequest,
+    identity: dict[str, Any] = Depends(require_mkt_access),
+):
+    started = time.perf_counter()
+    success = False
+    sql = ""
+    row_count = 0
+    try:
+        result = await asyncio.to_thread(execute_mkt_yoy, request)
+        sql = result.pop("sql")
+        row_count = result["row_count"]
+        success = True
+        return result
+    except ValueError as exc:
+        logger.warning("mkt-yoy rejected: %s", exc)
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("mkt-yoy failed: %s", exc)
+        raise HTTPException(status_code=500, detail="ไม่สามารถสร้างรายงาน YoY ได้ กรุณาลองใหม่") from exc
+    finally:
+        log_mkt_event(
+            user_sub=identity_sub(identity),
+            tool="show_mkt_yoy",
             metric=request.metric,
             dimensions=list(request.dimensions),
             execution_path="controlled",

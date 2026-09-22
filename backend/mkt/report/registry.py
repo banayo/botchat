@@ -2,9 +2,9 @@ from typing import Any
 
 from mkt import QUALIFIED_VIEW
 
-# Fill this after running sql/collect_mkt_view.sql.
-# Do not guess column names. Controlled reports stay off until this is True.
-REGISTRY_READY = False
+# Columns collected from KMPROD.MKT$ERP_SALE_REP (not guessed names).
+# Controlled reports require REGISTRY_READY and filled MKT_DIMENSIONS / MKT_METRICS.
+REGISTRY_READY = True
 
 MKT_FIELDS: dict[str, dict[str, Any]] = {
     "cre_date": {
@@ -13,6 +13,13 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
         "role": "date",
         "use_for_filter": True,
         "use_for_group": True,
+    },
+    "cancel": {
+        "column": "CANCEL",
+        "description": "สถานะยกเลิก (Y = ยกเลิก, N = เอกสารปกติ)",
+        "role": "dimension",
+        "use_for_filter": True,
+        "use_for_group": False,
     },
     "qty1": {
         "column": "QTY1",
@@ -172,9 +179,44 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
     },
 }
 
-MKT_DIMENSIONS: dict[str, dict[str, str]] = {}
+MKT_DIMENSIONS: dict[str, dict[str, str]] = {
+    "month": {
+        "expression": "TRUNC(CRE_DATE, 'MM')",
+        "alias": "MONTH_KEY",
+        "description": "เดือนตามวันที่สร้างเอกสาร",
+    },
+    "channel": {
+        "expression": "CUST_CHANNEL",
+        "alias": "CUST_CHANNEL",
+        "description": "ช่องทางการขายของลูกค้า/บิล",
+        "filter_column": "CUST_CHANNEL",
+    },
+}
 
-MKT_METRICS: dict[str, dict[str, Any]] = {}
+MKT_METRICS: dict[str, dict[str, Any]] = {
+    "sales": {
+        "description": "ยอดขาย (บาท) จาก ITEM_AMT1",
+        "base_expression": "ITEM_AMT1",
+        "allowed_aggregations": {
+            "sum": "SUM",
+            "average": "AVG",
+        },
+        "mandatory_filters": [
+            "CANCEL = 'N'",
+        ],
+    },
+    "quantity": {
+        "description": "จำนวนสินค้าจาก QTY1",
+        "base_expression": "QTY1",
+        "allowed_aggregations": {
+            "sum": "SUM",
+            "average": "AVG",
+        },
+        "mandatory_filters": [
+            "CANCEL = 'N'",
+        ],
+    },
+}
 
-DATE_FILTER_COLUMN = ""
+DATE_FILTER_COLUMN = MKT_FIELDS["cre_date"]["column"]
 FROM_CLAUSE = QUALIFIED_VIEW

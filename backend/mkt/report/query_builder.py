@@ -19,6 +19,8 @@ def build_mkt_report_sql(request: MktReportRequest) -> tuple[str, dict]:
         raise QueryBuildError(
             "marketing report registry is not configured; run sql/collect_mkt_view.sql first"
         )
+    if not DATE_FILTER_COLUMN:
+        raise QueryBuildError("DATE_FILTER_COLUMN is not configured")
 
     metric = MKT_METRICS.get(request.metric)
     if metric is None:
@@ -32,14 +34,12 @@ def build_mkt_report_sql(request: MktReportRequest) -> tuple[str, dict]:
 
     select_parts: list[str] = []
     group_parts: list[str] = []
-    order_parts: list[str] = []
     for key in request.dimensions:
         dim = MKT_DIMENSIONS.get(key)
         if dim is None:
             raise QueryBuildError(f"unknown dimension: {key}")
         select_parts.append(f"{dim['expression']} AS {dim['alias']}")
         group_parts.append(dim["expression"])
-        order_parts.append(dim["alias"])
 
     expr = metric["base_expression"].strip()
     select_parts.append(f"{agg_fn}(\n            {expr}\n        ) AS METRIC_VALUE")
@@ -55,27 +55,31 @@ def build_mkt_report_sql(request: MktReportRequest) -> tuple[str, dict]:
         "result_limit": request.limit,
     }
 
-    if request.zone:
-        zone_dim = MKT_DIMENSIONS.get("zone")
-        if zone_dim is None:
-            raise QueryBuildError("zone dimension is not configured")
-        filter_col = zone_dim.get("filter_column", zone_dim["expression"])
-        where_parts.append(f"{filter_col} = :zone")
-        params["zone"] = request.zone
+    if request.channel:
+        channel_dim = MKT_DIMENSIONS.get("channel")
+        if channel_dim is None:
+            raise QueryBuildError("channel dimension is not configured")
+        filter_col = channel_dim.get("filter_column", channel_dim["expression"])
+        where_parts.append(f"{filter_col} = :channel")
+        params["channel"] = request.channel
 
     select_sql = ",\n        ".join(select_parts)
-    group_sql = ",\n        ".join(group_parts)
-    order_sql = ",\n        ".join(order_parts)
     where_sql = " AND ".join(where_parts)
+
+    if group_parts:
+        group_sql = ",\n        ".join(group_parts)
+        group_clause = f"""
+    GROUP BY
+        {group_sql}"""
+    else:
+        group_clause = ""
 
     inner = f"""SELECT
         {select_sql}
     FROM {FROM_CLAUSE}
-    WHERE {where_sql}
-    GROUP BY
-        {group_sql}
+    WHERE {where_sql}{group_clause}
     ORDER BY
-        {order_sql}"""
+        METRIC_VALUE DESC NULLS LAST"""
 
     sql = f"""SELECT *
 FROM (
