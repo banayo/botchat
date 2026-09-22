@@ -14,13 +14,6 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
         "use_for_filter": True,
         "use_for_group": True,
     },
-    "cancel": {
-        "column": "CANCEL",
-        "description": "สถานะยกเลิก (Y = ยกเลิก, N = เอกสารปกติ)",
-        "role": "dimension",
-        "use_for_filter": True,
-        "use_for_group": False,
-    },
     "qty1": {
         "column": "QTY1",
         "description": "จำนวนสินค้า ใช้รวมยอดจำนวน อย่าใช้เป็นมูลค่าเงิน",
@@ -62,9 +55,26 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
         "use_for_filter": True,
         "use_for_group": True,
     },
+    "SHOP_TYPE": {
+        "column": "SHOP_TYPE",
+        "description": (
+            "ช่องทางจัดจำหน่ายสินค้า/ประเภทร้านของบิล "
+            "(เช่น BEAUTY, ONLINE, WEB, MART, LIVE) "
+            "ใช้กรองและจัดกลุ่มเป็นช่องทางขายได้ "
+            "ไม่ใช่แผนกขาย ดูแผนกที่ CUST_CHANNEL"
+        ),
+        "role": "dimension",
+        "use_for_filter": True,
+        "use_for_group": True,
+    },
     "CUST_CHANNEL": {
         "column": "CUST_CHANNEL",
-        "description": "ช่องทางการขายของลูกค้า/บิล ใช้กรองและจัดกลุ่มได้",
+        "description": (
+            "แผนกขายของบิล "
+            "(เช่น ONL, TDT, MDT, KMS, DEP, EXP) "
+            "ใช้กรองและจัดกลุ่มตามแผนกขายได้ "
+            "ไม่ใช่ช่องทางร้าน ดูช่องทางที่ SHOP_TYPE"
+        ),
         "role": "dimension",
         "use_for_filter": True,
         "use_for_group": True,
@@ -186,9 +196,15 @@ MKT_DIMENSIONS: dict[str, dict[str, str]] = {
         "description": "เดือนตามวันที่สร้างเอกสาร",
     },
     "channel": {
+        "expression": "SHOP_TYPE",
+        "alias": "SHOP_TYPE",
+        "description": "ช่องทาง/ประเภทร้าน (SHOP_TYPE)",
+        "filter_column": "SHOP_TYPE",
+    },
+    "dept": {
         "expression": "CUST_CHANNEL",
         "alias": "CUST_CHANNEL",
-        "description": "ช่องทางการขายของลูกค้า/บิล",
+        "description": "แผนกขาย (CUST_CHANNEL)",
         "filter_column": "CUST_CHANNEL",
     },
 }
@@ -201,9 +217,8 @@ MKT_METRICS: dict[str, dict[str, Any]] = {
             "sum": "SUM",
             "average": "AVG",
         },
-        "mandatory_filters": [
-            "CANCEL = 'N'",
-        ],
+        # View has no CANCEL column; do not invent filters.
+        "mandatory_filters": [],
     },
     "quantity": {
         "description": "จำนวนสินค้าจาก QTY1",
@@ -212,9 +227,7 @@ MKT_METRICS: dict[str, dict[str, Any]] = {
             "sum": "SUM",
             "average": "AVG",
         },
-        "mandatory_filters": [
-            "CANCEL = 'N'",
-        ],
+        "mandatory_filters": [],
     },
 }
 

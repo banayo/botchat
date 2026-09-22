@@ -92,13 +92,15 @@ class Tools:
         date_from: str,
         date_to: str,
         channel: Optional[str] = None,
+        dept: Optional[str] = None,
         limit: int = 500,
         __oauth_token__: Optional[dict] = None,
     ) -> str:
         """
         Aggregated marketing reports (controlled SQL).
 
-        Valid dimensions: "month", "channel" (empty list = grand total only)
+        Valid dimensions: "month", "channel" (SHOP_TYPE), "dept" (CUST_CHANNEL / แผนกขาย);
+        empty list = grand total only
         Valid metrics: "sales", "quantity"
         Valid aggregations: "sum", "average"
         date_from / date_to are inclusive (YYYY-MM-DD).
@@ -120,6 +122,8 @@ class Tools:
         }
         if channel:
             payload["channel"] = channel
+        if dept:
+            payload["dept"] = dept
 
         return self._post_json("/api/mkt-report", payload, __oauth_token__)
 
@@ -131,6 +135,7 @@ class Tools:
         aggregation: str = "sum",
         as_of: Optional[str] = None,
         channel: Optional[str] = None,
+        dept: Optional[str] = None,
         limit: int = 500,
         __oauth_token__: Optional[dict] = None,
     ) -> str:
@@ -141,8 +146,9 @@ class Tools:
           - "mtd_yoy": month-to-date this year vs same days last year
           - "full_month_yoy": full calendar month vs same month last year
 
-        Valid dimensions: "channel" or empty for company total only.
-        Do not pass "month". Prefer this over ask_mkt_data for executive YoY.
+        Valid dimensions: "channel" (SHOP_TYPE), "dept" (CUST_CHANNEL / แผนกขาย),
+        or empty for company total only. Do not pass "month".
+        Prefer this over ask_mkt_data for executive YoY.
         """
         if not self.valves.ENABLE_PIVOT:
             return json.dumps(
@@ -162,5 +168,7 @@ class Tools:
             payload["as_of"] = as_of
         if channel:
             payload["channel"] = channel
+        if dept:
+            payload["dept"] = dept
 
         return self._post_json("/api/mkt-report/yoy", payload, __oauth_token__)

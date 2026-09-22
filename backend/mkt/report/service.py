@@ -55,9 +55,14 @@ def execute_mkt_report(request: MktReportRequest) -> dict[str, Any]:
     engine = get_oracle_engine("mkt")
     with engine.connect() as connection:
         result = connection.execute(text(sql), params)
-        columns = list(result.keys())
+        # Oracle/SQLAlchemy may return lowercase keys; normalize for API + merge.
+        raw_keys = list(result.keys())
+        columns = [str(key).upper() for key in raw_keys]
         rows = [
-            {col: _json_safe(row[idx]) for idx, col in enumerate(columns)}
+            {
+                columns[idx]: _json_safe(row[idx])
+                for idx in range(len(columns))
+            }
             for row in result.fetchall()
         ]
 
@@ -87,11 +92,16 @@ def _compact_summary(
     }
     if "MONTH_KEY" in columns:
         summary["periods"] = len({row.get("MONTH_KEY") for row in rows})
-    if "CUST_CHANNEL" in columns:
+    if "SHOP_TYPE" in columns:
         channels = {
-            row.get("CUST_CHANNEL") for row in rows if row.get("CUST_CHANNEL") is not None
+            row.get("SHOP_TYPE") for row in rows if row.get("SHOP_TYPE") is not None
         }
         summary["channels"] = len(channels)
+    if "CUST_CHANNEL" in columns:
+        depts = {
+            row.get("CUST_CHANNEL") for row in rows if row.get("CUST_CHANNEL") is not None
+        }
+        summary["depts"] = len(depts)
     return summary
 
 
@@ -174,6 +184,7 @@ def execute_mkt_yoy(request: MktYoyRequest) -> dict[str, Any]:
         date_from=current_from,
         date_to=current_to,
         channel=request.channel,
+        dept=request.dept,
         limit=request.limit,
     )
     prior_req = MktReportRequest(
@@ -183,6 +194,7 @@ def execute_mkt_yoy(request: MktYoyRequest) -> dict[str, Any]:
         date_from=prior_from,
         date_to=prior_to,
         channel=request.channel,
+        dept=request.dept,
         limit=request.limit,
     )
 

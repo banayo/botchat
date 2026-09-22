@@ -63,6 +63,14 @@ def build_mkt_report_sql(request: MktReportRequest) -> tuple[str, dict]:
         where_parts.append(f"{filter_col} = :channel")
         params["channel"] = request.channel
 
+    if request.dept:
+        dept_dim = MKT_DIMENSIONS.get("dept")
+        if dept_dim is None:
+            raise QueryBuildError("dept dimension is not configured")
+        filter_col = dept_dim.get("filter_column", dept_dim["expression"])
+        where_parts.append(f"{filter_col} = :dept")
+        params["dept"] = request.dept
+
     select_sql = ",\n        ".join(select_parts)
     where_sql = " AND ".join(where_parts)
 

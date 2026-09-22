@@ -17,8 +17,8 @@ def test_same_day_range_allowed():
         date_to=date(2026, 9, 21),
     )
     sql, params = build_mkt_report_sql(req)
-    assert "CUST_CHANNEL" in sql
-    assert "CANCEL = 'N'" in sql
+    assert "SHOP_TYPE" in sql
+    assert "CANCEL" not in sql
     assert "METRIC_VALUE DESC" in sql
     assert params["date_from"] == date(2026, 9, 21)
     assert params["date_to"] == date(2026, 9, 22)
@@ -38,6 +38,20 @@ def test_total_without_dimensions():
     assert "QTY1" in sql
 
 
+def test_dept_dimension_uses_cust_channel():
+    req = MktReportRequest(
+        dimensions=["dept"],
+        metric="sales",
+        aggregation="sum",
+        date_from=date(2026, 9, 21),
+        date_to=date(2026, 9, 21),
+    )
+    sql, _params = build_mkt_report_sql(req)
+    assert "CUST_CHANNEL" in sql
+    assert "GROUP BY" in sql
+    assert "CUST_CHANNEL" in sql.split("GROUP BY", 1)[1]
+
+
 def test_channel_filter_bind():
     req = MktReportRequest(
         dimensions=["channel"],
@@ -45,11 +59,25 @@ def test_channel_filter_bind():
         aggregation="sum",
         date_from=date(2026, 9, 1),
         date_to=date(2026, 9, 22),
-        channel="Modern Trade",
+        channel="ONLINE",
     )
     sql, params = build_mkt_report_sql(req)
-    assert "CUST_CHANNEL = :channel" in sql
-    assert params["channel"] == "Modern Trade"
+    assert "SHOP_TYPE = :channel" in sql
+    assert params["channel"] == "ONLINE"
+
+
+def test_dept_filter_bind():
+    req = MktReportRequest(
+        dimensions=["dept"],
+        metric="sales",
+        aggregation="sum",
+        date_from=date(2026, 9, 1),
+        date_to=date(2026, 9, 22),
+        dept="ONL",
+    )
+    sql, params = build_mkt_report_sql(req)
+    assert "CUST_CHANNEL = :dept" in sql
+    assert params["dept"] == "ONL"
 
 
 def test_date_to_before_from_rejected():
@@ -90,15 +118,15 @@ def test_yoy_rejects_month_dimension():
 
 def test_merge_yoy_rows():
     current = [
-        {"CUST_CHANNEL": "A", "METRIC_VALUE": 120},
-        {"CUST_CHANNEL": "B", "METRIC_VALUE": 80},
+        {"SHOP_TYPE": "A", "METRIC_VALUE": 120},
+        {"SHOP_TYPE": "B", "METRIC_VALUE": 80},
     ]
     prior = [
-        {"CUST_CHANNEL": "A", "METRIC_VALUE": 100},
-        {"CUST_CHANNEL": "C", "METRIC_VALUE": 50},
+        {"SHOP_TYPE": "A", "METRIC_VALUE": 100},
+        {"SHOP_TYPE": "C", "METRIC_VALUE": 50},
     ]
-    merged = _merge_yoy_rows(current, prior, ["CUST_CHANNEL"])
-    by_ch = {row["CUST_CHANNEL"]: row for row in merged}
+    merged = _merge_yoy_rows(current, prior, ["SHOP_TYPE"])
+    by_ch = {row["SHOP_TYPE"]: row for row in merged}
     assert by_ch["A"]["DELTA"] == 20
     assert by_ch["A"]["PCT_CHANGE"] == 20.0
     assert by_ch["B"]["PRIOR_VALUE"] == 0.0
