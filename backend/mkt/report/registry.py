@@ -2,9 +2,9 @@ from typing import Any
 
 from mkt import QUALIFIED_VIEW
 
-# Fill this after running sql/collect_mkt_view.sql.
-# Do not guess column names. Controlled reports stay off until this is True.
-REGISTRY_READY = False
+# Columns collected from KMPROD.MKT$ERP_SALE_REP (not guessed names).
+# Controlled reports require REGISTRY_READY and filled MKT_DIMENSIONS / MKT_METRICS.
+REGISTRY_READY = True
 
 MKT_FIELDS: dict[str, dict[str, Any]] = {
     "cre_date": {
@@ -55,9 +55,26 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
         "use_for_filter": True,
         "use_for_group": True,
     },
+    "SHOP_TYPE": {
+        "column": "SHOP_TYPE",
+        "description": (
+            "ช่องทางจัดจำหน่ายสินค้า/ประเภทร้านของบิล "
+            "(เช่น BEAUTY, ONLINE, WEB, MART, LIVE) "
+            "ใช้กรองและจัดกลุ่มเป็นช่องทางขายได้ "
+            "ไม่ใช่แผนกขาย ดูแผนกที่ CUST_CHANNEL"
+        ),
+        "role": "dimension",
+        "use_for_filter": True,
+        "use_for_group": True,
+    },
     "CUST_CHANNEL": {
         "column": "CUST_CHANNEL",
-        "description": "ช่องทางการขายของลูกค้า/บิล ใช้กรองและจัดกลุ่มได้",
+        "description": (
+            "แผนกขายของบิล "
+            "(เช่น ONL, TDT, MDT, KMS, DEP, EXP) "
+            "ใช้กรองและจัดกลุ่มตามแผนกขายได้ "
+            "ไม่ใช่ช่องทางร้าน ดูช่องทางที่ SHOP_TYPE"
+        ),
         "role": "dimension",
         "use_for_filter": True,
         "use_for_group": True,
@@ -179,9 +196,47 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
     },
 }
 
-MKT_DIMENSIONS: dict[str, dict[str, str]] = {}
+MKT_DIMENSIONS: dict[str, dict[str, str]] = {
+    "month": {
+        "expression": "TRUNC(CRE_DATE, 'MM')",
+        "alias": "MONTH_KEY",
+        "description": "เดือนตามวันที่สร้างเอกสาร",
+    },
+    "channel": {
+        "expression": "SHOP_TYPE",
+        "alias": "SHOP_TYPE",
+        "description": "ช่องทาง/ประเภทร้าน (SHOP_TYPE)",
+        "filter_column": "SHOP_TYPE",
+    },
+    "dept": {
+        "expression": "CUST_CHANNEL",
+        "alias": "CUST_CHANNEL",
+        "description": "แผนกขาย (CUST_CHANNEL)",
+        "filter_column": "CUST_CHANNEL",
+    },
+}
 
-MKT_METRICS: dict[str, dict[str, Any]] = {}
+MKT_METRICS: dict[str, dict[str, Any]] = {
+    "sales": {
+        "description": "ยอดขาย (บาท) จาก ITEM_AMT1",
+        "base_expression": "ITEM_AMT1",
+        "allowed_aggregations": {
+            "sum": "SUM",
+            "average": "AVG",
+        },
+        # View has no CANCEL column; do not invent filters.
+        "mandatory_filters": [],
+    },
+    "quantity": {
+        "description": "จำนวนสินค้าจาก QTY1",
+        "base_expression": "QTY1",
+        "allowed_aggregations": {
+            "sum": "SUM",
+            "average": "AVG",
+        },
+        "mandatory_filters": [],
+    },
+}
 
-DATE_FILTER_COLUMN = ""
+DATE_FILTER_COLUMN = MKT_FIELDS["cre_date"]["column"]
 FROM_CLAUSE = QUALIFIED_VIEW

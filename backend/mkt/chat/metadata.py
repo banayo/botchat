@@ -1,3 +1,6 @@
+from typing import Iterable
+
+from inventory.in_brand import build_brand_context
 from mkt import QUALIFIED_VIEW, VIEW_NAME
 from mkt.report.registry import MKT_FIELDS, MKT_METRICS
 
@@ -17,6 +20,12 @@ SELECOM_NAME:
 อย่าตีความ NO-COM เป็นชื่อพนักงาน
 
 WH_ID = รหัสคลังที่บิลนั้นตัดสต็อก (บิลตัดจากคลังไหน)
+
+SHOP_TYPE = ช่องทาง/ประเภทร้านของบิล (เช่น BEAUTY, ONLINE, WEB)
+ไม่ใช่แผนกขาย
+
+CUST_CHANNEL = แผนกขายของบิล (เช่น ONL, TDT, MDT, KMS, DEP, EXP)
+ไม่ใช่ช่องทางร้าน
 
 FOC:
 - N = บิลนั้นไม่มีโปร
@@ -39,7 +48,7 @@ GROUP_NAME_TH (กลุ่มสินค้า)
 """
 
 
-def build_mkt_prompt() -> str:
+def build_mkt_prompt(brand_codes: Iterable[str]) -> str:
     field_lines = "\n".join(
         f"- {spec['column']}: {spec['description']}"
         for spec in MKT_FIELDS.values()
@@ -74,4 +83,5 @@ def build_mkt_prompt() -> str:
 
 คอลัมน์ที่รู้จัก:
 {field_lines}
-{metric_block}"""
+{metric_block}
+{build_brand_context(brand_codes)}"""
