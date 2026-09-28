@@ -170,6 +170,13 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
         "use_for_filter": True,
         "use_for_group": True,
     },
+    "BRAND_CODE": {
+        "column": "BRAND_CODE",
+        "description": "รหัสแบรนด์ เช่น 'CD (M)' ต้องมีเว้นวรรค ใช้กรองและจัดกลุ่มได้",
+        "role": "dimension",
+        "use_for_filter": True,
+        "use_for_group": True,
+    },
 }
 
 MKT_DIMENSIONS: dict[str, dict[str, str]] = {}
