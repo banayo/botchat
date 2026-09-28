@@ -8,6 +8,7 @@ Turn on ENABLE_PIVOT after /api/export-report is verified.
 
 from __future__ import annotations
 
+import asyncio
 import html
 import json
 import os
@@ -177,7 +178,7 @@ class Tools:
             headers["Authorization"] = f"Bearer {token}"
         return headers
 
-    def ask_export_data(
+    async def ask_export_data(
         self,
         question: str,
         __oauth_token__: Optional[dict] = None,
@@ -194,7 +195,12 @@ class Tools:
                 ensure_ascii=False,
             )
 
-        response = requests.post(
+        # Open WebUI runs a sync tool directly on its event loop, which freezes
+        # every user's websocket until the API answers (the agent often takes
+        # 40-60s, past socket.io's 45s ping window). Run the blocking call in a
+        # thread so the loop stays free.
+        response = await asyncio.to_thread(
+            requests.post,
             f"{self.valves.API_BASE_URL.rstrip('/')}/api/export-chat",
             headers=self._headers(__oauth_token__),
             json={"question": question},
@@ -214,7 +220,7 @@ class Tools:
             )
         return json.dumps(payload, ensure_ascii=False)
 
-    def show_export_pivot(
+    async def show_export_pivot(
         self,
         dimensions: list[str],
         metric: str,
@@ -272,7 +278,8 @@ class Tools:
         if country:
             payload["country"] = country
 
-        response = requests.post(
+        response = await asyncio.to_thread(
+            requests.post,
             f"{self.valves.API_BASE_URL.rstrip('/')}/api/export-report",
             headers=self._headers(__oauth_token__),
             json=payload,

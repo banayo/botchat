@@ -8,6 +8,7 @@ show_mkt_yoy: MTD / full-month vs same period last year → POST /api/mkt-report
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from typing import Optional
@@ -35,7 +36,7 @@ class Tools:
             headers["Authorization"] = f"Bearer {token}"
         return headers
 
-    def _post_json(
+    async def _post_json(
         self,
         path: str,
         payload: dict,
@@ -49,7 +50,12 @@ class Tools:
                 ensure_ascii=False,
             )
 
-        response = requests.post(
+        # Open WebUI runs a sync tool directly on its event loop, which freezes
+        # every user's websocket until the API answers (the agent often takes
+        # 40-60s, past socket.io's 45s ping window). Run the blocking call in a
+        # thread so the loop stays free.
+        response = await asyncio.to_thread(
+            requests.post,
             f"{self.valves.API_BASE_URL.rstrip('/')}{path}",
             headers=self._headers(oauth_token),
             json=payload,
@@ -69,7 +75,7 @@ class Tools:
             )
         return json.dumps(body, ensure_ascii=False)
 
-    def ask_mkt_data(
+    async def ask_mkt_data(
         self,
         question: str,
         __oauth_token__: Optional[dict] = None,
@@ -78,13 +84,13 @@ class Tools:
         Use for marketing-data questions in natural language.
         Do not use this for export sales; use ask_export_data instead.
         """
-        return self._post_json(
+        return await self._post_json(
             "/api/mkt-chat",
             {"question": question},
             __oauth_token__,
         )
 
-    def show_mkt_pivot(
+    async def show_mkt_pivot(
         self,
         dimensions: list[str],
         metric: str,
@@ -125,9 +131,9 @@ class Tools:
         if dept:
             payload["dept"] = dept
 
-        return self._post_json("/api/mkt-report", payload, __oauth_token__)
+        return await self._post_json("/api/mkt-report", payload, __oauth_token__)
 
-    def show_mkt_yoy(
+    async def show_mkt_yoy(
         self,
         mode: str = "mtd_yoy",
         dimensions: Optional[list[str]] = None,
@@ -171,4 +177,4 @@ class Tools:
         if dept:
             payload["dept"] = dept
 
-        return self._post_json("/api/mkt-report/yoy", payload, __oauth_token__)
+        return await self._post_json("/api/mkt-report/yoy", payload, __oauth_token__)
