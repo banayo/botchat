@@ -2,7 +2,7 @@ import re
 
 import sqlglot
 from sqlglot import exp
-from sqlglot.errors import ParseError
+from sqlglot.errors import SqlglotError
 
 from export import AGENT_ROW_CAP, VIEW_NAME, VIEW_OWNER
 
@@ -95,7 +95,7 @@ def validate_and_limit_sql(sql_query: str, row_cap: int = AGENT_ROW_CAP) -> str:
     to_parse = _quote_approved_view(raw)
     try:
         statements = sqlglot.parse(to_parse, dialect="oracle")
-    except ParseError as exc:
+    except SqlglotError as exc:  # ParseError and TokenError (e.g. unbalanced quote)
         raise SQLPolicyError(f"unable to parse SQL: {exc}") from exc
 
     trees = [stmt for stmt in statements if stmt is not None]

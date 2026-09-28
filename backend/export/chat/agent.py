@@ -9,7 +9,9 @@ from sqlalchemy import text
 
 from ai_config import llm
 from db.oracle import get_oracle_engine
+from export import QUALIFIED_VIEW
 from export.chat.metadata import CURATED_VALUE_CONTEXT, build_export_prompt
+from inventory.in_brand import fetch_brand_codes
 from export.chat.sql_guard import SQLPolicyError, validate_and_limit_sql
 
 logger = logging.getLogger("uvicorn.error")
@@ -81,11 +83,14 @@ def create_export_sql_database() -> SQLDatabase: ##3.LangChain Agent ( โคร
 @lru_cache(maxsize=1)
 def get_export_agent():#2.LangChain Agent ( LLM เขียน SQL → Oracle)
     logger.info("Initializing export LangChain agent (Oracle + vLLM)")
+    # only brands this view actually sells, not all ~370 in the master
+    brand_codes = fetch_brand_codes(get_oracle_engine("export"), QUALIFIED_VIEW)
+    logger.info("export agent: %d brand codes in view", len(brand_codes))
     return create_sql_agent(
         llm=llm,
         db=create_export_sql_database(),
         agent_type="tool-calling",
-        prefix=build_export_prompt(),
+        prefix=build_export_prompt(brand_codes),
         top_k=50,
         max_iterations=8,
         max_execution_time=90,

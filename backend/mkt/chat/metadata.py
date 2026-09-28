@@ -1,3 +1,6 @@
+from typing import Iterable
+
+from inventory.in_brand import build_brand_context
 from mkt import QUALIFIED_VIEW, VIEW_NAME
 from mkt.report.registry import MKT_FIELDS, MKT_METRICS
 
@@ -45,7 +48,7 @@ GROUP_NAME_TH (กลุ่มสินค้า)
 """
 
 
-def build_mkt_prompt() -> str:
+def build_mkt_prompt(brand_codes: Iterable[str]) -> str:
     field_lines = "\n".join(
         f"- {spec['column']}: {spec['description']}"
         for spec in MKT_FIELDS.values()
@@ -80,4 +83,5 @@ def build_mkt_prompt() -> str:
 
 คอลัมน์ที่รู้จัก:
 {field_lines}
-{metric_block}"""
+{metric_block}
+{build_brand_context(brand_codes)}"""

@@ -9,7 +9,8 @@ from sqlalchemy import text
 
 from ai_config import llm
 from db.oracle import get_oracle_engine
-from mkt import VIEW_NAME, VIEW_OWNER
+from inventory.in_brand import fetch_brand_codes
+from mkt import QUALIFIED_VIEW, VIEW_NAME, VIEW_OWNER
 from mkt.chat.metadata import CURATED_VALUE_CONTEXT, build_mkt_prompt
 from mkt.chat.sql_guard import SQLPolicyError, validate_and_limit_sql
 
@@ -84,11 +85,14 @@ def create_mkt_sql_database() -> SQLDatabase:
 @lru_cache(maxsize=1)
 def get_mkt_agent():
     logger.info("Initializing marketing LangChain agent (Oracle + vLLM)")
+    # only brands this view actually sells, not all ~370 in the master
+    brand_codes = fetch_brand_codes(get_oracle_engine("mkt"), QUALIFIED_VIEW)
+    logger.info("mkt agent: %d brand codes in view", len(brand_codes))
     return create_sql_agent(
         llm=llm,
         db=create_mkt_sql_database(),
         agent_type="tool-calling",
-        prefix=build_mkt_prompt(),
+        prefix=build_mkt_prompt(brand_codes),
         top_k=50,
         max_iterations=8,
         max_execution_time=90,

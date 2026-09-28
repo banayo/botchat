@@ -1,4 +1,8 @@
+from typing import Iterable
+
+from export import VIEW_NAME
 from export.report.registry import EXPORT_FIELDS, EXPORT_METRICS
+from inventory.in_brand import build_brand_context
 
 CURATED_VALUE_CONTEXT = """
 Representative values (do not invent other codes):
@@ -19,7 +23,7 @@ Date rules:
 """
 
 
-def build_export_prompt() -> str:
+def build_export_prompt(brand_codes: Iterable[str]) -> str:
     field_lines = "\n".join(
         f"- {spec['column']}: {spec['description']}"
         for spec in EXPORT_FIELDS.values()
@@ -30,7 +34,7 @@ def build_export_prompt() -> str:
     )
     return f"""คุณคือผู้เชี่ยวชาญข้อมูลแผนกส่งออก
 ดึงข้อมูลได้จาก view ที่ sql_db_list_tables แสดงเท่านั้น ห้ามใส่ schema นำหน้าตอนเรียก tool
-ใน SELECT ใช้อ้างอิง erp$erp_sale_rep_exp ได้
+ใน SELECT ใช้อ้างอิง {VIEW_NAME.lower()} ได้
 
 นี่คือ Oracle 11g:
 - ห้ามใช้ FETCH FIRST, OFFSET, LIMIT
@@ -49,4 +53,5 @@ def build_export_prompt() -> str:
 
 เมตริกธุรกิจ (ถ้าคำนวณยอดเองให้ทำตามนี้):
 {metric_lines}
-"""
+
+{build_brand_context(brand_codes)}"""
