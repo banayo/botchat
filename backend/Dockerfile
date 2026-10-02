@@ -15,6 +15,8 @@ RUN apt-get update \
 # Instant Client 19 สามารถต่อ Oracle 11g+ ได้ (thick mode)
 ENV ORACLE_CLIENT_LIB_DIR=/opt/oracle/instantclient_19_19
 ENV LD_LIBRARY_PATH=${ORACLE_CLIENT_LIB_DIR}
+# disable pycahce
+ENV PYTHONDONTWRITEBYTECODE=1 
 
 RUN mkdir -p /opt/oracle \
     && curl -fsSL -o /tmp/instantclient.zip \

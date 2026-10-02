@@ -14,6 +14,36 @@ class QueryBuildError(ValueError):
     pass
 
 
+# Every name the registry uses for a dimension (key, alias, column, expression).
+# None of these is ever a real filter value; seeing one means the LLM meant
+# "group by" - e.g. channel="SHOP_TYPE" -> WHERE SHOP_TYPE = 'SHOP_TYPE' -> 0 rows.
+_DIMENSION_NAMES = frozenset(
+    str(name).upper()
+    for key, dim in MKT_DIMENSIONS.items()
+    for name in (key, dim.get("alias"), dim.get("expression"), dim.get("filter_column"))
+    if name
+)
+
+
+def _add_filter(key: str, value: str | None, where_parts: list[str], params: dict) -> None:
+    value = (value or "").strip()
+    if not value:
+        return
+    dim = MKT_DIMENSIONS.get(key)
+    if dim is None:
+        raise QueryBuildError(f"{key} dimension is not configured")
+    if value.upper() in _DIMENSION_NAMES:
+        raise QueryBuildError(
+            f"{key}={value!r} is a column name, not a {key} value. "
+            f"To break down by {key}, use dimensions=['{key}'] and leave {key} empty."
+        )
+    if dim.get("filter_case") == "upper":
+        value = value.upper()  # exact match; "Online" would otherwise find 0 rows
+    filter_col = dim.get("filter_column", dim["expression"])
+    where_parts.append(f"{filter_col} = :{key}")
+    params[key] = value
+
+
 def build_mkt_report_sql(request: MktReportRequest) -> tuple[str, dict]:
     if not REGISTRY_READY:
         raise QueryBuildError(
@@ -55,21 +85,8 @@ def build_mkt_report_sql(request: MktReportRequest) -> tuple[str, dict]:
         "result_limit": request.limit,
     }
 
-    if request.channel:
-        channel_dim = MKT_DIMENSIONS.get("channel")
-        if channel_dim is None:
-            raise QueryBuildError("channel dimension is not configured")
-        filter_col = channel_dim.get("filter_column", channel_dim["expression"])
-        where_parts.append(f"{filter_col} = :channel")
-        params["channel"] = request.channel
-
-    if request.dept:
-        dept_dim = MKT_DIMENSIONS.get("dept")
-        if dept_dim is None:
-            raise QueryBuildError("dept dimension is not configured")
-        filter_col = dept_dim.get("filter_column", dept_dim["expression"])
-        where_parts.append(f"{filter_col} = :dept")
-        params["dept"] = request.dept
+    _add_filter("channel", request.channel, where_parts, params)
+    _add_filter("dept", request.dept, where_parts, params)
 
     select_sql = ",\n        ".join(select_parts)
     where_sql = " AND ".join(where_parts)

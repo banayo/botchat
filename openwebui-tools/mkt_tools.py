@@ -105,8 +105,12 @@ class Tools:
         """
         Aggregated marketing reports (controlled SQL).
 
-        Valid dimensions: "month", "channel" (SHOP_TYPE), "dept" (CUST_CHANNEL / แผนกขาย);
-        empty list = grand total only
+        dimensions = how to break the result down (group by):
+          "month", "channel" (ช่องทางร้าน), "dept" (แผนกขาย); empty list = grand total only
+        channel / dept = optional filters to ONE value; leave empty to include all.
+          They are values, never column names - do not pass "SHOP_TYPE" or "CUST_CHANNEL".
+          e.g. sales per channel  -> dimensions=["channel"], channel empty
+               ONLINE sales only  -> dimensions=[], channel="ONLINE"
         Valid metrics: "sales", "quantity"
         Valid aggregations: "sum", "average"
         date_from / date_to are inclusive (YYYY-MM-DD).
@@ -152,8 +156,10 @@ class Tools:
           - "mtd_yoy": month-to-date this year vs same days last year
           - "full_month_yoy": full calendar month vs same month last year
 
-        Valid dimensions: "channel" (SHOP_TYPE), "dept" (CUST_CHANNEL / แผนกขาย),
+        dimensions = how to break the result down: "channel" (ช่องทางร้าน), "dept" (แผนกขาย),
         or empty for company total only. Do not pass "month".
+        channel / dept = optional filters to ONE value, e.g. channel="ONLINE";
+        leave empty to include all. Never pass "SHOP_TYPE" or "CUST_CHANNEL" as a value.
         Prefer this over ask_mkt_data for executive YoY.
         """
         if not self.valves.ENABLE_PIVOT:

@@ -58,10 +58,10 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
     "SHOP_TYPE": {
         "column": "SHOP_TYPE",
         "description": (
-            "ช่องทางจัดจำหน่ายสินค้า/ประเภทร้านของบิล "
+            "ประเภทร้านของบิล "
             "(เช่น BEAUTY, ONLINE, WEB, MART, LIVE) "
-            "ใช้กรองและจัดกลุ่มเป็นช่องทางขายได้ "
-            "ไม่ใช่แผนกขาย ดูแผนกที่ CUST_CHANNEL"
+            "ใช้กรองและจัดกลุ่มเป็นประเภทร้านค้าได้ "
+            "ไม่ใช่ช่องทางขาย ดูที่ CUST_CHANNEL"
         ),
         "role": "dimension",
         "use_for_filter": True,
@@ -70,10 +70,10 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
     "CUST_CHANNEL": {
         "column": "CUST_CHANNEL",
         "description": (
-            "แผนกขายของบิล "
+            "ช่องทางขายของบิล "
             "(เช่น ONL, TDT, MDT, KMS, DEP, EXP) "
-            "ใช้กรองและจัดกลุ่มตามแผนกขายได้ "
-            "ไม่ใช่ช่องทางร้าน ดูช่องทางที่ SHOP_TYPE"
+            "ใช้กรองและจัดกลุ่มตามช่องทางขายได้ "
+            "ไม่ใช่ประเภทร้าน ดูช่องทางที่ SHOP_TYPE"
         ),
         "role": "dimension",
         "use_for_filter": True,
@@ -207,12 +207,16 @@ MKT_DIMENSIONS: dict[str, dict[str, str]] = {
         "alias": "SHOP_TYPE",
         "description": "ช่องทาง/ประเภทร้าน (SHOP_TYPE)",
         "filter_column": "SHOP_TYPE",
+        # every SHOP_TYPE value in the view is uppercase (BEAUTY, ONLINE, ...)
+        "filter_case": "upper",
     },
     "dept": {
         "expression": "CUST_CHANNEL",
         "alias": "CUST_CHANNEL",
         "description": "แผนกขาย (CUST_CHANNEL)",
         "filter_column": "CUST_CHANNEL",
+        # every CUST_CHANNEL value in the view is uppercase (ONL, TDT, ...)
+        "filter_case": "upper",
     },
 }
 
