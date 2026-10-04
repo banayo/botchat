@@ -79,6 +79,30 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
         "use_for_filter": True,
         "use_for_group": True,
     },
+    "CUST_AREA_CODE": {
+        "column": "CUST_AREA_CODE",
+        "description": (
+            "ใช้เฉพาะสองแผนก "
+            "CUST_CHANNEL = EXP คือชื่อประเทศ "
+            "CUST_CHANNEL = TDT คือรหัสพื้นที่ เช่น BK-C1 "
+            "แผนกอื่นไม่ใช้คอลัมน์นี้ "
+            "ทีมของ TDT ดูที่ BAND_GROUP ไม่ใช่คอลัมน์นี้"
+        ),
+        "role": "dimension",
+        "use_for_filter": True,
+        "use_for_group": True,
+    },
+    "BAND_GROUP": {
+        "column": "BAND_GROUP",
+        "description": (
+            "ทีมของแผนก TDT แบ่งได้ 2 ทีมคือ BBB และ CTD "
+            "ใช้เมื่อ CUST_CHANNEL = TDT "
+            "ไม่ใช่รหัสพื้นที่ รหัสพื้นที่ของ TDT อยู่ที่ CUST_AREA_CODE"
+        ),
+        "role": "dimension",
+        "use_for_filter": True,
+        "use_for_group": True,
+    },
     "SUB_DESC": {
         "column": "SUB_DESC",
         "description": (

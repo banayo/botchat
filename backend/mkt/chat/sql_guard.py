@@ -28,10 +28,11 @@ _FORBIDDEN_NODES = tuple(
     if node is not None
 )
 _FORBIDDEN_FUNC_PREFIXES = ("DBMS_", "UTL_", "SYS.")
-_VIEW_PATTERN = re.compile(
-    rf"\b(?:{re.escape(VIEW_OWNER)}\.)?{re.escape(VIEW_NAME)}\b",
-    re.IGNORECASE,
-)
+def _view_pattern(view_name: str) -> re.Pattern[str]:
+    return re.compile(
+        rf"\b(?:{re.escape(VIEW_OWNER)}\.)?{re.escape(view_name)}\b",
+        re.IGNORECASE,
+    )
 
 
 def _ident(node) -> str:
@@ -47,8 +48,8 @@ def _ident(node) -> str:
     return str(name).replace('"', "").upper()
 
 
-def _quote_approved_view(sql: str) -> str:
-    return _VIEW_PATTERN.sub(f'"{VIEW_NAME}"', sql)
+def _quote_approved_view(sql: str, view_name: str) -> str:
+    return _view_pattern(view_name).sub(f'"{view_name}"', sql)
 
 
 def _reject_forbidden_functions(tree: exp.Expression) -> None:
@@ -60,7 +61,7 @@ def _reject_forbidden_functions(tree: exp.Expression) -> None:
             raise SQLPolicyError(f"function {name} is not allowed")
 
 
-def _assert_approved_tables(tree: exp.Expression) -> None:
+def _assert_approved_tables(tree: exp.Expression, view_name: str) -> None:
     tables = list(tree.find_all(exp.Table))
     if not tables:
         raise SQLPolicyError("query must read from the approved marketing view")
@@ -73,11 +74,16 @@ def _assert_approved_tables(tree: exp.Expression) -> None:
             raise SQLPolicyError("database links are not allowed")
         if schema and schema != VIEW_OWNER:
             raise SQLPolicyError(f"schema {schema} is not allowed")
-        if name != VIEW_NAME:
+        if name != view_name.upper():
             raise SQLPolicyError(f"table {name} is not allowed")
 
 
-def validate_and_limit_sql(sql_query: str, row_cap: int = AGENT_ROW_CAP) -> str:
+def validate_and_limit_sql(
+    sql_query: str,
+    row_cap: int = AGENT_ROW_CAP,
+    view_name: str | None = None,
+) -> str:
+    approved = (view_name or VIEW_NAME).strip()
     if not sql_query or not str(sql_query).strip():
         raise SQLPolicyError("SQL is empty")
 
@@ -93,7 +99,7 @@ def validate_and_limit_sql(sql_query: str, row_cap: int = AGENT_ROW_CAP) -> str:
     if not (upper.startswith("SELECT") or upper.startswith("WITH")):
         raise SQLPolicyError("only SELECT or WITH ... SELECT is allowed")
 
-    to_parse = _quote_approved_view(raw)
+    to_parse = _quote_approved_view(raw, approved)
     try:
         statements = sqlglot.parse(to_parse, dialect="oracle")
     except SqlglotError as exc:  # ParseError and TokenError (e.g. unbalanced quote)
@@ -120,7 +126,7 @@ def validate_and_limit_sql(sql_query: str, row_cap: int = AGENT_ROW_CAP) -> str:
             "FETCH FIRST / OFFSET / LIMIT are not allowed; use ROWNUM on Oracle 11g"
         )
 
-    _assert_approved_tables(tree)
+    _assert_approved_tables(tree, approved)
     _reject_forbidden_functions(tree)
 
     cap = int(row_cap)

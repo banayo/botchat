@@ -1,8 +1,8 @@
 from typing import Iterable
-
 from inventory.in_brand import build_brand_context
-from mkt import QUALIFIED_VIEW, VIEW_NAME
+from mkt import QUALIFIED_RETURN_VIEW, QUALIFIED_VIEW, RETURN_VIEW_NAME, VIEW_NAME
 from mkt.report.registry import MKT_FIELDS, MKT_METRICS
+from mkt.report.return_registry import MKT_RETURN_FIELDS
 
 CURATED_VALUE_CONTEXT = """
 Use only columns returned by sql_db_schema. Do not invent names.
@@ -26,6 +26,14 @@ SHOP_TYPE = ช่องทาง/ประเภทร้านของบิ�
 
 CUST_CHANNEL = แผนกขายของบิล (เช่น ONL, TDT, MDT, KMS, DEP, EXP)
 ไม่ใช่ช่องทางร้าน
+
+CUST_AREA_CODE ใช้แค่ 2 แผนก:
+- CUST_CHANNEL = EXP คือชื่อประเทศ
+- CUST_CHANNEL = TDT คือรหัสพื้นที่ เช่น BK-C1
+แผนกอื่นไม่ใช้คอลัมน์นี้
+
+BAND_GROUP = ทีมของแผนก TDT มี 2 ทีมคือ BBB และ CTD
+ไม่ใช่รหัสพื้นที่
 
 FOC:
 - N = บิลนั้นไม่มีโปร
@@ -77,7 +85,8 @@ def build_mkt_prompt(brand_codes: Iterable[str]) -> str:
 - ใช้เฉพาะคอลัมน์จาก sql_db_schema ห้ามเดาชื่อคอลัมน์
 - คอลัมน์ที่รู้จักด้านล่างคือความหมายธุรกิจ ห้ามใช้ชื่อที่ไม่อยู่ใน schema
 - ช่วงเวลาขายของบิลใช้ CRE_DATE ห้ามใช้ FIRST_SALE_DATE หรือ FIRST_DISCON แทน
-- ตอบเป็นภาษาไทยเมื่อสรุปผล
+- ตอบตามภาษาที่ผู้ใช้พิมพ์: ภาษาอังกฤษตอบอังกฤษ ภาษาไทยตอบไทย
+- ชื่อคอลัมน์ รหัสพื้นที่ และชื่อประเทศคงตามข้อมูล ห้ามแปล
 - ห้าม DML/DDL และห้ามตารางอื่น
 - หากถามนอกแผนกการตลาด ให้ปฏิเสธอย่างสุภาพ
 
@@ -85,3 +94,42 @@ def build_mkt_prompt(brand_codes: Iterable[str]) -> str:
 {field_lines}
 {metric_block}
 {build_brand_context(brand_codes)}"""
+
+
+def _return_field_lines() -> str:
+    return "\n".join(
+        f"- {spec['column']}: {spec['description']}"
+        for spec in MKT_RETURN_FIELDS.values()
+    )
+
+
+RETURN_VALUE_CONTEXT = f"""
+Use only columns returned by sql_db_schema. Do not invent names.
+This view is product returns only. Do not compute net sales.
+
+คอลัมน์ของ view รับคืน:
+{_return_field_lines()}
+"""
+
+
+def build_mkt_return_prompt() -> str:
+    return f"""คุณคือผู้เชี่ยวชาญข้อมูลรับคืนสินค้าของแผนกการตลาด
+ดึงข้อมูลได้จาก view ที่ sql_db_list_tables แสดงเท่านั้น ห้ามใส่ schema นำหน้าตอนเรียก tool
+ใน SELECT อ้าง {QUALIFIED_RETURN_VIEW} หรือชื่อสั้น `{RETURN_VIEW_NAME.lower()}` ได้
+
+นี่คือ Oracle 11g:
+- ห้ามใช้ FETCH FIRST, OFFSET, LIMIT
+- จำกัดแถวด้วย subquery ร่วมกับ ROWNUM
+- concat ใช้ ||
+
+กฎ:
+- ตอบเฉพาะเรื่องรับคืนสินค้า
+- ถ้าผู้ใช้ถามยอดขาย ให้ปฏิเสธและบอกให้ใช้ข้อมูลยอดขายแยกต่างหาก
+- ใช้เฉพาะคอลัมน์จาก sql_db_schema ห้ามเดาชื่อคอลัมน์
+- ช่วงเวลาใช้ RTR_DATE
+- ถ้า CONIFRIM_CN_ON ว่าง ใบขอคืนยังไม่ผ่าน ห้ามสมมติว่ามีเลขที่ใบคืนแล้ว
+- ตอบตามภาษาที่ผู้ใช้พิมพ์: ภาษาอังกฤษตอบอังกฤษ ภาษาไทยตอบไทย
+- ชื่อคอลัมน์ รหัสพื้นที่ และชื่อประเทศคงตามข้อมูล ห้ามแปล
+- ห้าม DML/DDL และห้ามตารางหรือ view อื่น
+
+{RETURN_VALUE_CONTEXT}"""

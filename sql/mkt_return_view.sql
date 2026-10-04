@@ -1,0 +1,13 @@
+-- ask_mkt_return reads MKT_RETURN_VIEW_NAME (default ERP_SALE_REP_MKT_RETURN).
+-- Do not build this from the sales view. The return document uses its own columns.
+-- Point the view at the real return-request source, then grant select to MKT_READ.
+--
+-- Expected columns:
+--   RTR_NO           เลขที่ใบขอคืน
+--   CONIFRIM_CN_ON   เลขที่ใบคืน  ว่าง = ใบขอคืนยังไม่ผ่าน
+--   SALES_GROUP      ช่องทางที่ทำใบขอคืน
+--   WARE_CODE        รหัสคลังที่คืน
+--   TRAN_QTY         จำนวน
+--   TOTAL_PRICE      จำนวนเงิน
+--   ITEM_NAME_TH     ชื่อสินค้า
+--   RTR_DATE         วันที่ทำเลขที่ใบขอคืน

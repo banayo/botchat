@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from mkt.audit import hash_text, identity_sub, log_mkt_event
 from mkt.authz import require_mkt_access
 from mkt.chat.agent import invoke_mkt_agent
+from mkt.chat.return_agent import invoke_mkt_return_agent
 from mkt.chat.models import MktQuestion
 from mkt.report.models import MktReportRequest, MktYoyRequest
 from mkt.report.service import execute_mkt_report, execute_mkt_yoy
@@ -44,6 +45,41 @@ async def ask_mkt_data(
         log_mkt_event(
             user_sub=identity_sub(identity),
             tool="ask_mkt_data",
+            question_hash=hash_text(request.question),
+            execution_path="langchain",
+            llm_duration_ms=int((time.perf_counter() - started) * 1000),
+            returned_rows=row_count,
+            success=success,
+        )
+
+
+@router.post("/api/mkt-return-chat")
+async def ask_mkt_return(
+    request: MktQuestion,
+    identity: dict[str, Any] = Depends(require_mkt_access),
+):
+    started = time.perf_counter()
+    success = False
+    row_count = 0
+    try:
+        response = await asyncio.to_thread(invoke_mkt_return_agent, request.question)
+        data = response.get("data") or {}
+        row_count = len(data.get("rows", []))
+        success = True
+        return {
+            "kind": "answer",
+            "reply": response.get("output", ""),
+            "columns": data.get("columns", []),
+            "rows": data.get("rows", []),
+            "row_count": row_count,
+        }
+    except Exception as exc:
+        logger.exception("mkt-return-chat failed: %s", exc)
+        raise HTTPException(status_code=500, detail="ไม่สามารถประมวลผลคำถามรับคืนได้ กรุณาลองใหม่") from exc
+    finally:
+        log_mkt_event(
+            user_sub=identity_sub(identity),
+            tool="ask_mkt_return",
             question_hash=hash_text(request.question),
             execution_path="langchain",
             llm_duration_ms=int((time.perf_counter() - started) * 1000),
