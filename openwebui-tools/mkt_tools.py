@@ -1,7 +1,8 @@
 """
 Open WebUI Tools for marketing data.
 
-ask_mkt_data: exploratory LangChain path → POST /api/mkt-chat
+ask_mkt_data: sales questions → POST /api/mkt-chat
+ask_mkt_return: product-return questions → POST /api/mkt-return-chat
 show_mkt_pivot: controlled report → POST /api/mkt-report
 show_mkt_yoy: MTD / full-month vs same period last year → POST /api/mkt-report/yoy
 """
@@ -81,11 +82,28 @@ class Tools:
         __oauth_token__: Optional[dict] = None,
     ) -> str:
         """
-        Use for marketing-data questions in natural language.
+        Use for free-form marketing sales questions only.
+        Do not use this for product returns; use ask_mkt_return.
         Do not use this for export sales; use ask_export_data instead.
         """
         return await self._post_json(
             "/api/mkt-chat",
+            {"question": question},
+            __oauth_token__,
+        )
+
+    async def ask_mkt_return(
+        self,
+        question: str,
+        __oauth_token__: Optional[dict] = None,
+    ) -> str:
+        """
+        Use for free-form product-return questions only.
+        Do not use this for sales totals; use ask_mkt_data or show_mkt_yoy.
+        If the user asks for both sales and returns, call each tool separately.
+        """
+        return await self._post_json(
+            "/api/mkt-return-chat",
             {"question": question},
             __oauth_token__,
         )
