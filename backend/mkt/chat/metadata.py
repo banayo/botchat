@@ -32,7 +32,7 @@ CUST_AREA_CODE ใช้แค่ 2 แผนก:
 - CUST_CHANNEL = TDT คือรหัสพื้นที่ เช่น BK-C1
 แผนกอื่นไม่ใช้คอลัมน์นี้
 
-BAND_GROUP = ทีมของแผนก TDT มี 2 ทีมคือ BBB และ CTD
+BRAND_GROUP = ทีมของแผนก TDT มี 2 ทีมคือ BBB และ CTD
 ไม่ใช่รหัสพื้นที่
 
 FOC:

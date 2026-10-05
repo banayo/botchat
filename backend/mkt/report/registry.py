@@ -86,14 +86,14 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
             "CUST_CHANNEL = EXP คือชื่อประเทศ "
             "CUST_CHANNEL = TDT คือรหัสพื้นที่ เช่น BK-C1 "
             "แผนกอื่นไม่ใช้คอลัมน์นี้ "
-            "ทีมของ TDT ดูที่ BAND_GROUP ไม่ใช่คอลัมน์นี้"
+            "ทีมของ TDT ดูที่ BRAND_GROUP ไม่ใช่คอลัมน์นี้"
         ),
         "role": "dimension",
         "use_for_filter": True,
         "use_for_group": True,
     },
-    "BAND_GROUP": {
-        "column": "BAND_GROUP",
+    "BRAND_GROUP": {
+        "column": "BRAND_GROUP",
         "description": (
             "ทีมของแผนก TDT แบ่งได้ 2 ทีมคือ BBB และ CTD "
             "ใช้เมื่อ CUST_CHANNEL = TDT "
