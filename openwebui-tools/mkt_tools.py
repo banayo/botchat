@@ -124,7 +124,8 @@ class Tools:
         Aggregated marketing reports (controlled SQL).
 
         dimensions = how to break the result down (group by):
-          "month", "channel" (ช่องทางร้าน), "dept" (แผนกขาย); empty list = grand total only
+          "month", "channel" (ช่องทางร้าน), "dept" (แผนกขาย),
+          "module" (ประเภทเอกสาร IV/RT/CN/DN จากรหัส MODULE); empty list = grand total only
         channel / dept = optional filters to ONE value; leave empty to include all.
           They are values, never column names - do not pass "SHOP_TYPE" or "CUST_CHANNEL".
           e.g. sales per channel  -> dimensions=["channel"], channel empty
@@ -175,7 +176,7 @@ class Tools:
           - "full_month_yoy": full calendar month vs same month last year
 
         dimensions = how to break the result down: "channel" (ช่องทางร้าน), "dept" (แผนกขาย),
-        or empty for company total only. Do not pass "month".
+        "module" (ประเภทเอกสาร), or empty for company total only. Do not pass "month".
         channel / dept = optional filters to ONE value, e.g. channel="ONLINE";
         leave empty to include all. Never pass "SHOP_TYPE" or "CUST_CHANNEL" as a value.
         Prefer this over ask_mkt_data for executive YoY.

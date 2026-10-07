@@ -38,6 +38,24 @@ def test_total_without_dimensions():
     assert "QTY1" in sql
 
 
+def test_module_dimension_groups_document_series():
+    req = MktReportRequest(
+        dimensions=["module"],
+        metric="sales",
+        aggregation="sum",
+        date_from=date(2026, 9, 1),
+        date_to=date(2026, 9, 30),
+    )
+    sql, _params = build_mkt_report_sql(req)
+    assert "SUBSTR(MODULE, 1, 2)) IN ('CN', 'DN')" in sql
+    assert "SUBSTR(MODULE, 1, 1)) IN ('F', 'A') THEN 'IV'" in sql
+    assert "SUBSTR(MODULE, 1, 1)) IN ('G', 'L', 'R') THEN 'RT'" in sql
+    assert "AS DOC_TYPE" in sql
+    grouped = sql.split("GROUP BY", 1)[1]
+    assert "SUBSTR(MODULE, 1, 1)" in grouped
+    assert "SUM(" not in sql.split("CASE", 1)[0]
+
+
 def test_dept_dimension_uses_cust_channel():
     req = MktReportRequest(
         dimensions=["dept"],

@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-DimensionKey = Literal["month", "channel", "dept"]
+DimensionKey = Literal["month", "channel", "dept", "module"]
 MetricKey = Literal["sales", "quantity"]
 AggregationKey = Literal["sum", "average"]
 YoyMode = Literal["mtd_yoy", "full_month_yoy"]
@@ -53,6 +53,6 @@ class MktYoyRequest(BaseModel):
             raise ValueError("duplicate dimensions are not allowed")
         if "month" in self.dimensions:
             raise ValueError(
-                "month dimension is not valid for YoY compare; use channel, dept, or none"
+                "month dimension is not valid for YoY compare; use channel, dept, module, or none"
             )
         return self

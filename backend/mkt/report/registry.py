@@ -218,7 +218,30 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
         "use_for_filter": True,
         "use_for_group": True,
     },
+    "module": {
+        "column": "MODULE",
+        "description": (
+            "รหัสชุดเอกสาร ใช้จัดประเภทเอกสาร "
+            "ขึ้นต้น F หรือ A = IV ใบขาย, "
+            "ขึ้นต้น G หรือ L หรือ R = RT ใบคืน, "
+            "ขึ้นต้น CN = CN ใบลดหนี้, "
+            "ขึ้นต้น DN = DN ใบเพิ่มหนี้"
+        ),
+        "role": "dimension",
+        "use_for_filter": True,
+        "use_for_group": True,
+    },
 }
+
+# Per-row document series on MODULE. Do not infer this from SUM(QTY1) / SUM(ITEM_AMT1).
+MODULE_GROUP_EXPRESSION = (
+    "CASE"
+    " WHEN UPPER(SUBSTR(MODULE, 1, 2)) IN ('CN', 'DN')"
+    " THEN UPPER(SUBSTR(MODULE, 1, 2))"
+    " WHEN UPPER(SUBSTR(MODULE, 1, 1)) IN ('F', 'A') THEN 'IV'"
+    " WHEN UPPER(SUBSTR(MODULE, 1, 1)) IN ('G', 'L', 'R') THEN 'RT'"
+    " END"
+)
 
 MKT_DIMENSIONS: dict[str, dict[str, str]] = {
     "month": {
@@ -240,6 +263,12 @@ MKT_DIMENSIONS: dict[str, dict[str, str]] = {
         "description": "แผนกขาย (CUST_CHANNEL)",
         "filter_column": "CUST_CHANNEL",
         # every CUST_CHANNEL value in the view is uppercase (ONL, TDT, ...)
+        "filter_case": "upper",
+    },
+    "module": {
+        "expression": MODULE_GROUP_EXPRESSION,
+        "alias": "DOC_TYPE",
+        "description": "ประเภทเอกสารจากรหัส MODULE (IV, RT, CN, DN)",
         "filter_case": "upper",
     },
 }

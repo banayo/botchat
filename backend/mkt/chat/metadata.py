@@ -1,18 +1,24 @@
 from typing import Iterable
 from inventory.in_brand import build_brand_context
 from mkt import QUALIFIED_RETURN_VIEW, QUALIFIED_VIEW, RETURN_VIEW_NAME, VIEW_NAME
-from mkt.report.registry import MKT_FIELDS, MKT_METRICS
+from mkt.report.registry import MKT_FIELDS, MKT_METRICS, MODULE_GROUP_EXPRESSION
 from mkt.report.return_registry import MKT_RETURN_FIELDS
 
-CURATED_VALUE_CONTEXT = """
+CURATED_VALUE_CONTEXT = f"""
 Use only columns returned by sql_db_schema. Do not invent names.
 
 If CANCEL exists:
 - N = เอกสารปกติ
 - Y = เอกสารยกเลิก ต้องตัดออกจากยอด
 
-If MODULE exists, use the codes shown in schema comments or distinct values from the view.
-Do not copy export-only column names unless they appear in sql_db_schema.
+MODULE เป็นรหัสชุดเอกสาร ไม่ใช่ IV/RT ตรงๆ
+จัดประเภททีละแถวด้วยนิพจน์นี้ ห้ามเดาจากเครื่องหมายของ SUM(QTY1) หรือ SUM(ITEM_AMT1):
+{MODULE_GROUP_EXPRESSION}
+- ขึ้นต้น F หรือ A = IV ใบขาย
+- ขึ้นต้น G หรือ L หรือ R = RT ใบคืน
+- ขึ้นต้น CN = CN ใบลดหนี้
+- ขึ้นต้น DN = DN ใบเพิ่มหนี้
+รหัสอื่นไม่ต้องจัดเข้า IV
 
 SELECOM_NAME:
 - NO-COM = บิลนั้นไม่มีค่าคอม
