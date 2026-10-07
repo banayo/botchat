@@ -17,7 +17,7 @@ def test_same_day_range_allowed():
         date_to=date(2026, 9, 21),
     )
     sql, params = build_mkt_report_sql(req)
-    assert "SHOP_TYPE" in sql
+    assert "CUST_CHANNEL" in sql
     assert "CANCEL" not in sql
     assert "METRIC_VALUE DESC" in sql
     assert params["date_from"] == date(2026, 9, 21)
@@ -48,6 +48,7 @@ def test_module_dimension_groups_document_series():
     )
     sql, _params = build_mkt_report_sql(req)
     assert "SUBSTR(MODULE, 1, 2)) IN ('CN', 'DN')" in sql
+    assert "UPPER(MODULE) IN ('IV', 'RT')" in sql
     assert "SUBSTR(MODULE, 1, 1)) IN ('F', 'A') THEN 'IV'" in sql
     assert "SUBSTR(MODULE, 1, 1)) IN ('G', 'L', 'R') THEN 'RT'" in sql
     assert "AS DOC_TYPE" in sql
@@ -56,18 +57,18 @@ def test_module_dimension_groups_document_series():
     assert "SUM(" not in sql.split("CASE", 1)[0]
 
 
-def test_dept_dimension_uses_cust_channel():
+def test_shop_dimension_uses_shop_type():
     req = MktReportRequest(
-        dimensions=["dept"],
+        dimensions=["shop"],
         metric="sales",
         aggregation="sum",
         date_from=date(2026, 9, 21),
         date_to=date(2026, 9, 21),
     )
     sql, _params = build_mkt_report_sql(req)
-    assert "CUST_CHANNEL" in sql
+    assert "SHOP_TYPE" in sql
     assert "GROUP BY" in sql
-    assert "CUST_CHANNEL" in sql.split("GROUP BY", 1)[1]
+    assert "SHOP_TYPE" in sql.split("GROUP BY", 1)[1]
 
 
 def test_channel_filter_bind():
@@ -77,25 +78,25 @@ def test_channel_filter_bind():
         aggregation="sum",
         date_from=date(2026, 9, 1),
         date_to=date(2026, 9, 22),
-        channel="ONLINE",
+        channel="ONL",
     )
     sql, params = build_mkt_report_sql(req)
-    assert "SHOP_TYPE = :channel" in sql
-    assert params["channel"] == "ONLINE"
+    assert "CUST_CHANNEL = :channel" in sql
+    assert params["channel"] == "ONL"
 
 
-def test_dept_filter_bind():
+def test_shop_filter_bind():
     req = MktReportRequest(
-        dimensions=["dept"],
+        dimensions=["shop"],
         metric="sales",
         aggregation="sum",
         date_from=date(2026, 9, 1),
         date_to=date(2026, 9, 22),
-        dept="ONL",
+        shop="ONLINE",
     )
     sql, params = build_mkt_report_sql(req)
-    assert "CUST_CHANNEL = :dept" in sql
-    assert params["dept"] == "ONL"
+    assert "SHOP_TYPE = :shop" in sql
+    assert params["shop"] == "ONLINE"
 
 
 def test_date_to_before_from_rejected():

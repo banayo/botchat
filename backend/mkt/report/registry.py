@@ -73,7 +73,7 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
             "ช่องทางขายของบิล "
             "(เช่น ONL, TDT, MDT, KMS, DEP, EXP) "
             "ใช้กรองและจัดกลุ่มตามช่องทางขายได้ "
-            "ไม่ใช่ประเภทร้าน ดูช่องทางที่ SHOP_TYPE"
+            "ไม่ใช่ประเภทร้าน ดูประเภทร้านที่ SHOP_TYPE"
         ),
         "role": "dimension",
         "use_for_filter": True,
@@ -222,8 +222,8 @@ MKT_FIELDS: dict[str, dict[str, Any]] = {
         "column": "MODULE",
         "description": (
             "รหัสชุดเอกสาร ใช้จัดประเภทเอกสาร "
-            "ขึ้นต้น F หรือ A = IV ใบขาย, "
-            "ขึ้นต้น G หรือ L หรือ R = RT ใบคืน, "
+            "ค่า IV หรือขึ้นต้น F หรือ A = IV ใบขาย, "
+            "ค่า RT หรือขึ้นต้น G หรือ L หรือ R = RT ใบคืน, "
             "ขึ้นต้น CN = CN ใบลดหนี้, "
             "ขึ้นต้น DN = DN ใบเพิ่มหนี้"
         ),
@@ -238,6 +238,7 @@ MODULE_GROUP_EXPRESSION = (
     "CASE"
     " WHEN UPPER(SUBSTR(MODULE, 1, 2)) IN ('CN', 'DN')"
     " THEN UPPER(SUBSTR(MODULE, 1, 2))"
+    " WHEN UPPER(MODULE) IN ('IV', 'RT') THEN UPPER(MODULE)"
     " WHEN UPPER(SUBSTR(MODULE, 1, 1)) IN ('F', 'A') THEN 'IV'"
     " WHEN UPPER(SUBSTR(MODULE, 1, 1)) IN ('G', 'L', 'R') THEN 'RT'"
     " END"
@@ -250,19 +251,19 @@ MKT_DIMENSIONS: dict[str, dict[str, str]] = {
         "description": "เดือนตามวันที่สร้างเอกสาร",
     },
     "channel": {
-        "expression": "SHOP_TYPE",
-        "alias": "SHOP_TYPE",
-        "description": "ช่องทาง/ประเภทร้าน (SHOP_TYPE)",
-        "filter_column": "SHOP_TYPE",
-        # every SHOP_TYPE value in the view is uppercase (BEAUTY, ONLINE, ...)
-        "filter_case": "upper",
-    },
-    "dept": {
         "expression": "CUST_CHANNEL",
         "alias": "CUST_CHANNEL",
-        "description": "แผนกขาย (CUST_CHANNEL)",
+        "description": "ช่องทางขาย (CUST_CHANNEL)",
         "filter_column": "CUST_CHANNEL",
         # every CUST_CHANNEL value in the view is uppercase (ONL, TDT, ...)
+        "filter_case": "upper",
+    },
+    "shop": {
+        "expression": "SHOP_TYPE",
+        "alias": "SHOP_TYPE",
+        "description": "ประเภทร้าน (SHOP_TYPE)",
+        "filter_column": "SHOP_TYPE",
+        # every SHOP_TYPE value in the view is uppercase (BEAUTY, ONLINE, ...)
         "filter_case": "upper",
     },
     "module": {

@@ -16,7 +16,7 @@ class QueryBuildError(ValueError):
 
 # Every name the registry uses for a dimension (key, alias, column, expression).
 # None of these is ever a real filter value; seeing one means the LLM meant
-# "group by" - e.g. channel="SHOP_TYPE" -> WHERE SHOP_TYPE = 'SHOP_TYPE' -> 0 rows.
+# "group by" - e.g. channel="CUST_CHANNEL" -> WHERE CUST_CHANNEL = 'CUST_CHANNEL' -> 0 rows.
 _DIMENSION_NAMES = frozenset(
     str(name).upper()
     for key, dim in MKT_DIMENSIONS.items()
@@ -86,7 +86,7 @@ def build_mkt_report_sql(request: MktReportRequest) -> tuple[str, dict]:
     }
 
     _add_filter("channel", request.channel, where_parts, params)
-    _add_filter("dept", request.dept, where_parts, params)
+    _add_filter("shop", request.shop, where_parts, params)
 
     select_sql = ",\n        ".join(select_parts)
     where_sql = " AND ".join(where_parts)

@@ -116,7 +116,7 @@ class Tools:
         date_from: str,
         date_to: str,
         channel: Optional[str] = None,
-        dept: Optional[str] = None,
+        shop: Optional[str] = None,
         limit: int = 500,
         __oauth_token__: Optional[dict] = None,
     ) -> str:
@@ -124,12 +124,14 @@ class Tools:
         Aggregated marketing reports (controlled SQL).
 
         dimensions = how to break the result down (group by):
-          "month", "channel" (ช่องทางร้าน), "dept" (แผนกขาย),
+          "month", "channel" (ช่องทางขาย CUST_CHANNEL เช่น ONL, TDT),
+          "shop" (ประเภทร้าน SHOP_TYPE เช่น BEAUTY, ONLINE),
           "module" (ประเภทเอกสาร IV/RT/CN/DN จากรหัส MODULE); empty list = grand total only
-        channel / dept = optional filters to ONE value; leave empty to include all.
-          They are values, never column names - do not pass "SHOP_TYPE" or "CUST_CHANNEL".
+        channel / shop = optional filters to ONE value; leave empty to include all.
+          They are values, never column names - do not pass "CUST_CHANNEL" or "SHOP_TYPE".
           e.g. sales per channel  -> dimensions=["channel"], channel empty
-               ONLINE sales only  -> dimensions=[], channel="ONLINE"
+               ONL sales only     -> dimensions=[], channel="ONL"
+               ONLINE shop only   -> dimensions=[], shop="ONLINE"
         Valid metrics: "sales", "quantity"
         Valid aggregations: "sum", "average"
         date_from / date_to are inclusive (YYYY-MM-DD).
@@ -151,8 +153,8 @@ class Tools:
         }
         if channel:
             payload["channel"] = channel
-        if dept:
-            payload["dept"] = dept
+        if shop:
+            payload["shop"] = shop
 
         return await self._post_json("/api/mkt-report", payload, __oauth_token__)
 
@@ -164,7 +166,7 @@ class Tools:
         aggregation: str = "sum",
         as_of: Optional[str] = None,
         channel: Optional[str] = None,
-        dept: Optional[str] = None,
+        shop: Optional[str] = None,
         limit: int = 500,
         __oauth_token__: Optional[dict] = None,
     ) -> str:
@@ -175,10 +177,11 @@ class Tools:
           - "mtd_yoy": month-to-date this year vs same days last year
           - "full_month_yoy": full calendar month vs same month last year
 
-        dimensions = how to break the result down: "channel" (ช่องทางร้าน), "dept" (แผนกขาย),
-        "module" (ประเภทเอกสาร), or empty for company total only. Do not pass "month".
-        channel / dept = optional filters to ONE value, e.g. channel="ONLINE";
-        leave empty to include all. Never pass "SHOP_TYPE" or "CUST_CHANNEL" as a value.
+        dimensions = how to break the result down: "channel" (ช่องทางขาย CUST_CHANNEL),
+        "shop" (ประเภทร้าน SHOP_TYPE), "module" (ประเภทเอกสาร),
+        or empty for company total only. Do not pass "month".
+        channel / shop = optional filters to ONE value, e.g. channel="ONL" or shop="ONLINE";
+        leave empty to include all. Never pass "CUST_CHANNEL" or "SHOP_TYPE" as a value.
         Prefer this over ask_mkt_data for executive YoY.
         """
         if not self.valves.ENABLE_PIVOT:
@@ -199,7 +202,7 @@ class Tools:
             payload["as_of"] = as_of
         if channel:
             payload["channel"] = channel
-        if dept:
-            payload["dept"] = dept
+        if shop:
+            payload["shop"] = shop
 
         return await self._post_json("/api/mkt-report/yoy", payload, __oauth_token__)

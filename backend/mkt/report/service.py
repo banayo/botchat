@@ -92,16 +92,16 @@ def _compact_summary(
     }
     if "MONTH_KEY" in columns:
         summary["periods"] = len({row.get("MONTH_KEY") for row in rows})
-    if "SHOP_TYPE" in columns:
-        channels = {
-            row.get("SHOP_TYPE") for row in rows if row.get("SHOP_TYPE") is not None
-        }
-        summary["channels"] = len(channels)
     if "CUST_CHANNEL" in columns:
-        depts = {
+        channels = {
             row.get("CUST_CHANNEL") for row in rows if row.get("CUST_CHANNEL") is not None
         }
-        summary["depts"] = len(depts)
+        summary["channels"] = len(channels)
+    if "SHOP_TYPE" in columns:
+        shops = {
+            row.get("SHOP_TYPE") for row in rows if row.get("SHOP_TYPE") is not None
+        }
+        summary["shops"] = len(shops)
     return summary
 
 
@@ -184,7 +184,7 @@ def execute_mkt_yoy(request: MktYoyRequest) -> dict[str, Any]:
         date_from=current_from,
         date_to=current_to,
         channel=request.channel,
-        dept=request.dept,
+        shop=request.shop,
         limit=request.limit,
     )
     prior_req = MktReportRequest(
@@ -194,7 +194,7 @@ def execute_mkt_yoy(request: MktYoyRequest) -> dict[str, Any]:
         date_from=prior_from,
         date_to=prior_to,
         channel=request.channel,
-        dept=request.dept,
+        shop=request.shop,
         limit=request.limit,
     )
 
